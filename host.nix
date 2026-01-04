@@ -15,7 +15,8 @@ let
   mkVm = { name, module, packageArg ? null, package ? null }: {
     autostart = true;
     config = {
-      imports = [ module inputs.sops-nix.nixosModules.sops ];
+      imports =
+        [ ./microvms/common.nix module inputs.sops-nix.nixosModules.sops ];
       _module.args = {
         inherit inputs;
         hostBridgeName = networkBridgeName;
@@ -134,7 +135,8 @@ in {
     nat = {
       enable = true;
       internalInterfaces = [ networkBridgeName ];
-      externalInterface = "enp0s6"; # TODO: Can differ depending on the VPS provider
+      externalInterface =
+        "enp0s6"; # TODO: Can differ depending on the VPS provider
     };
   };
 
@@ -169,8 +171,8 @@ in {
       # 'lib.filterAttrs' takes a function that returns true/false.
       # '?' is the "has attribute" operator. We check if 'host-proxy' exists in the VM config.
       proxyEnabledVms = lib.filterAttrs (name: vm:
-        (vm.config.services or { }) ? host-proxy && (vm.config.services.host-proxy.enable or false))
-        config.microvm.vms;
+        (vm.config.services or { }) ? host-proxy
+        && (vm.config.services.host-proxy.enable or false)) config.microvm.vms;
 
       # 2. Map the filtered VMs into Caddy virtualHost entries.
       # 'lib.mapAttrs'' (note the prime ') allows to change both the KEY and the VALUE.

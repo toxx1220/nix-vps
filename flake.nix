@@ -16,24 +16,17 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nannuo-bot = {
-      url = "github:toxx1220/nannuo-bot";
-    };
-    bgs-backend = {
-      url = "github:toxx1220/bgs_backend_V2?dir=deployment";
-    };
+    nannuo-bot = { url = "github:toxx1220/nannuo-bot"; };
+    bgs-backend = { url = "github:toxx1220/bgs_backend_V2?dir=deployment"; };
   };
 
   outputs = inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      systems =
+        [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
       perSystem = { config, self', inputs', pkgs, system, ... }: {
-        devShells.default = pkgs.mkShell {
-          packages = [
-            pkgs.nixpkgs-fmt
-            pkgs.sops
-          ];
-        };
+        devShells.default =
+          pkgs.mkShell { packages = [ pkgs.nixpkgs-fmt pkgs.sops ]; };
       };
       flake = {
         nixosConfigurations.vps-arm = inputs.nixpkgs.lib.nixosSystem {
