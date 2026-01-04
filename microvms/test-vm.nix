@@ -9,8 +9,6 @@
     };
 
     microvm = {
-      vcpu = 1;
-      mem = 256;
       interfaces = [{
         type = "bridge";
         id = "vm-test";

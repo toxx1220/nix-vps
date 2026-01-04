@@ -1,7 +1,7 @@
 { config, pkgs, lib, inputs, ... }:
 let
   user = "toxx";
-  sshPort = 6969;
+  sshPort = 22; # TODO: change?
 
   # --- SERVICE TOGGLES ---
   enableNannuoBot = false;
@@ -28,7 +28,7 @@ let
   };
 
 in {
-  networking.hostName = "nixos-vps";
+  networking.hostName = "${user}-vps";
   time.timeZone = "Europe/Berlin";
 
   boot.loader.systemd-boot.enable = true;
@@ -89,7 +89,6 @@ in {
     };
   };
 
-  # SSH configuration
   services.openssh = {
     enable = true;
     ports = [ sshPort ];
@@ -104,21 +103,18 @@ in {
   services.fail2ban = {
     enable = true;
     maxretry = 5;
-    ignoreIP = [
-      "127.0.0.1/8" # localhost
+    ignoreIP = [ # ignore localhost
+      "127.0.0.1/8"
       "::1"
     ];
-    # Initial ban duration: 1 hour
-    bantime = "1h";
-    # Exponential backoff for repeat offenders
+    bantime = "1h"; # initial
     bantime-increment = {
       enable = true;
-      factor = "2"; # Double the ban time each time
+      factor = "2"; # Doubline -> exponential
       maxtime = "168h"; # Cap at 1 week
     };
   };
 
-  # Networking
   networking = {
     networkmanager.enable = false;
     firewall = {
@@ -210,7 +206,7 @@ in {
     # Note: Use 0755 and root:root by default, but Postgres paths might need 0700 and UID 71.
     mkRule = path: "d ${path} 0755 root root -";
   in map mkRule vmDataPaths ++ [
-    # Specific override for Postgres data (needs strict permissions)
+    # Specific override for Postgres data (needs strict permissions) # TODO: remove?
     "d /var/lib/microvms/bgs-backend/data 0700 71 71 -"
   ];
 
