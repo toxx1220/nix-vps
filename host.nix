@@ -197,8 +197,10 @@ in {
   # Automatically create data directories for any VM that defines a 'shares' path
   systemd.tmpfiles.rules = let
     # Extract all share sources from all enabled VMs
-    allShares = lib.concatMap (vm: map (s: s.source) vm.config.microvm.shares)
-      (lib.attrValues config.microvm.vms);
+    allShares = lib.concatMap (vm:
+      if vm.config ? microvm then
+        map (s: s.source) vm.config.microvm.shares
+      else [ ]) (lib.attrValues config.microvm.vms);
     # Filter only those that are in /var/lib/microvms (to avoid touching system paths)
     vmDataPaths =
       lib.filter (path: lib.hasPrefix "/var/lib/microvms" path) allShares;
