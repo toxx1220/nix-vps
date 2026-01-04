@@ -9,6 +9,8 @@ let
   enableTestVm = true;
 
   networkBridgeName = "br0";
+  gatewayIp = "10.0.0.1";
+
   # Helper to define a MicroVM with standard boilerplate
   mkVm = { name, module, packageArg ? null, package ? null }: {
     autostart = true;
@@ -16,6 +18,8 @@ let
       imports = [ module inputs.sops-nix.nixosModules.sops ];
       _module.args = {
         inherit inputs;
+        hostBridgeName = networkBridgeName;
+        hostGatewayIp = gatewayIp;
       } // (lib.optionalAttrs (packageArg != null) {
         ${packageArg} = package;
       });
@@ -165,7 +169,7 @@ in {
       # 'lib.filterAttrs' takes a function that returns true/false.
       # '?' is the "has attribute" operator. We check if 'host-proxy' exists in the VM config.
       proxyEnabledVms = lib.filterAttrs (name: vm:
-        vm.config.services ? host-proxy && vm.config.services.host-proxy.enable)
+        (vm.config.services or { }) ? host-proxy && (vm.config.services.host-proxy.enable or false))
         config.microvm.vms;
 
       # 2. Map the filtered VMs into Caddy virtualHost entries.

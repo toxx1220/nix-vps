@@ -1,4 +1,4 @@
-{ pkgs, bot-package, lib, inputs, ... }: {
+{ pkgs, bot-package, lib, inputs, hostBridgeName, hostGatewayIp, ... }: {
 
   # --- 1. INTERFACE (Options) ---
   options.services.host-proxy = {
@@ -28,7 +28,8 @@
       hypervisor = "qemu";
       interfaces = [ {
         type = "bridge";
-        id = "br0";
+        id = "vm-nannuo";
+        bridge = hostBridgeName;
         mac = "02:00:00:00:00:01";
       } ];
       shares = [
@@ -61,7 +62,10 @@
       address = "10.0.0.10";
       prefixLength = 24;
     } ];
-    networking.defaultGateway = "10.0.0.1";
+    networking.defaultGateway = {
+      address = hostGatewayIp;
+      interface = "eth0";
+    };
     networking.nameservers = [ "1.1.1.1" ];
   };
 }
