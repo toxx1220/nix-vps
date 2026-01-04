@@ -5,18 +5,20 @@ let
 
   # --- SERVICE TOGGLES ---
   enableNannuoBot = false;
-  enableBgsBackend = true;
+  enableBgsBackend = false;
+  enableTestVm = true;
 
   networkBridgeName = "br0";
   # Helper to define a MicroVM with standard boilerplate
-  mkVm = { name, module, packageArg, package }: {
+  mkVm = { name, module, packageArg ? null, package ? null }: {
     autostart = true;
     config = {
       imports = [ module inputs.sops-nix.nixosModules.sops ];
       _module.args = {
         inherit inputs;
+      } // (lib.optionalAttrs (packageArg != null) {
         ${packageArg} = package;
-      };
+      });
     };
   };
 
@@ -56,20 +58,30 @@ in {
   sops = {
     defaultSopsFile = ./secrets.yaml;
     age.keyFile = "/var/lib/sops-nix/key.txt";
+    secrets = {
+      user-password.neededForUsers = true;
+      root-password.neededForUsers = true;
+    };
   };
 
-  # User configuration
-  users.users = {
-    ${user} = {
-      isNormalUser = true;
-      extraGroups = [ "wheel" ];
-      openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO"
-      ];
+  users = {
+    mutableUsers = false; # recommended when managing passwords via sops & nix
+    users = {
+      ${user} = {
+        isNormalUser = true;
+        extraGroups = [ "wheel" ];
+        hashedPasswordFile = config.sops.secrets.user-password.path;
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO"
+        ];
+      };
+      root = {
+        hashedPasswordFile = config.sops.secrets.root-password.path;
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO" # TODO: replace?
+        ];
+      };
     };
-    root.openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO" # TODO: replace?
-    ];
   };
 
   # SSH configuration
@@ -136,6 +148,11 @@ in {
       module = ./microvms/bgs-backend.nix;
       packageArg = "backend-package";
       package = inputs.bgs-backend.packages.${pkgs.system}.default;
+    };
+  }) // (lib.optionalAttrs enableTestVm {
+    test-vm = mkVm {
+      name = "test-vm";
+      module = ./microvms/test-vm.nix;
     };
   });
 
