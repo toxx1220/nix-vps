@@ -1,27 +1,14 @@
-{ pkgs, backend-package, lib, ... }: {
+{ pkgs, backend-package, lib, inputs, ... }: {
 
   # --- 1. INTERFACE (Options) ---
-  # This defines NEW settings that this file can accept.
-  # It's like defining a "schema" for this MicroVM.
   options.services.host-proxy = {
     enable = lib.mkEnableOption "host reverse proxy";
-    
-    domain = lib.mkOption {
-      type = lib.types.str;
-      description = "The public domain name (e.g. api.example.com)";
-    };
-
-    port = lib.mkOption {
-      type = lib.types.port;
-      default = 8080;
-      description = "The internal port the app listens on";
-    };
+    domain = lib.mkOption { type = lib.types.str; };
+    port = lib.mkOption { type = lib.types.port; default = 8080; };
   };
 
   # --- 2. IMPLEMENTATION (Config) ---
-  # This is where we actually set the values and define the system.
   config = {
-    # We enable our own custom option here
     services.host-proxy = {
       enable = true;
       domain = "api.yourdomain.com";
@@ -29,7 +16,20 @@
     };
 
     networking.hostName = "bgs-backend";
-    system.stateVersion = "24.11";
+    system.stateVersion = "25.11";
+
+    # Hybrid Secrets Setup
+    sops = {
+      # Pull secrets from the service's own repository!
+      defaultSopsFile = "${inputs.bgs-backend}/secrets.yaml";
+      # Use the host's key (shared via microvm.shares below)
+      age.keyFile = "/var/lib/sops-nix/key.txt";
+      
+      secrets.bgs_env = {
+        # This secret should contain the entire EnvironmentFile content
+        # or you can define individual secrets.
+      };
+    };
 
     microvm = {
       vcpu = 2;
@@ -40,12 +40,21 @@
         id = "br0";
         mac = "02:00:00:00:00:02";
       } ];
-      shares = [ {
-        source = "/var/lib/microvms/bgs-backend/data";
-        mountPoint = "/var/lib/postgresql";
-        tag = "db-data";
-        proto = "virtiofs";
-      } ];
+      shares = [
+        {
+          source = "/var/lib/microvms/bgs-backend/data";
+          mountPoint = "/var/lib/postgresql";
+          tag = "db-data";
+          proto = "virtiofs";
+        }
+        # SHARE THE HOST KEY: This allows the VM to decrypt its secrets
+        {
+          source = "/var/lib/sops-nix/key.txt";
+          mountPoint = "/var/lib/sops-nix/key.txt";
+          tag = "sops-key";
+          proto = "virtiofs";
+        }
+      ];
     };
 
     services.postgresql = {
@@ -67,6 +76,8 @@
         ExecStart = "${backend-package}/bin/bgs-backend";
         User = "bgs-app";
         Restart = "always";
+        # Use the decrypted secret as an environment file
+        EnvironmentFile = config.sops.secrets.bgs_env.path;
         Environment = [
           "SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/bgs_db"
           "SPRING_DATASOURCE_USERNAME=bgs_user"
