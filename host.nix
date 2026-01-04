@@ -118,7 +118,7 @@ in {
     networkmanager.enable = false;
     firewall = {
       enable = true;
-      allowedTCPPorts = [ sshPort 443 ];
+      allowedTCPPorts = [ sshPort 80 443 ];
     };
 
     # microVM setup
@@ -130,7 +130,7 @@ in {
     nat = {
       enable = true;
       internalInterfaces = [ networkBridgeName ];
-      externalInterface = "eth0";
+      externalInterface = "enp0s6"; # TODO: Can differ depending on the VPS provider
     };
   };
 
