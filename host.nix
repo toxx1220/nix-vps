@@ -90,7 +90,7 @@ in {
     externalInterface = "eth0";
   };
 
-  # MicroVM Host Configuration
+  # MicroVM Host Configuration, toggle-able inside the module
   microvm.vms = (lib.optionalAttrs enableNannuoBot {
     nannuo-bot = mkVm {
       name = "nannuo-bot";
@@ -110,14 +110,23 @@ in {
   # Dynamic Caddy Configuration
   services.caddy = {
     enable = true;
+    # Generate 'virtualHosts' attribute set dynamically
     virtualHosts = let
+      # 1. Filter the list of all MicroVMs.
+      # 'lib.filterAttrs' takes a function that returns true/false.
+      # '?' is the "has attribute" operator. We check if 'host-proxy' exists in the VM config.
       proxyEnabledVms = lib.filterAttrs (name: vm:
         vm.config.services ? host-proxy && vm.config.services.host-proxy.enable)
         config.microvm.vms;
 
+      # 2. Map the filtered VMs into Caddy virtualHost entries.
+      # 'lib.mapAttrs'' (note the prime ') allows to change both the KEY and the VALUE.
+      # KEY = domain name, VALUE = proxy config.
       mkCaddyEntry = name: vm: {
-        name = vm.config.services.host-proxy.domain;
-        value = {
+        name =
+          vm.config.services.host-proxy.domain; # New Key: e.g. "api.example.com"
+        value = { # New Value: Caddy config
+          # Get the first IP address defined in the VM
           extraConfig = let
             vmIp = (lib.head
               vm.config.networking.interfaces.eth0.ipv4.addresses).address;
