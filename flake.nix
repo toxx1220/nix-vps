@@ -2,7 +2,8 @@
   description = "NixOS VPS with MicroVMs";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -15,27 +16,37 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Add your service repos as inputs
     nannuo-bot = {
       url = "github:toxx1220/nannuo-bot";
     };
     bgs-backend = {
-      url = "github:toxx1220/bgs_backend_V2";
+      url = "github:toxx1220/bgs_backend_V2?dir=deployment";
     };
   };
 
-  outputs = { self, nixpkgs, disko, microvm, sops-nix, nannuo-bot, bgs-backend, ... }@inputs: {
-    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      # Pass inputs to all modules
-      specialArgs = { inherit inputs; };
-      modules = [
-        disko.nixosModules.disko
-        ./disko.nix
-        ./host.nix
-        microvm.nixosModules.host
-        sops-nix.nixosModules.sops
-      ];
+  outputs = inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
+      perSystem = { config, self', inputs', pkgs, system, ... }: {
+        devShells.default = pkgs.mkShell {
+          packages = [
+            pkgs.nixpkgs-fmt
+            pkgs.sops
+          ];
+        };
+      };
+      flake = {
+        nixosConfigurations.vps-arm = inputs.nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          specialArgs = { inherit inputs; };
+          modules = [
+            inputs.disko.nixosModules.disko
+            ./disko.nix
+            ./host.nix
+            inputs.microvm.nixosModules.host
+            inputs.sops-nix.nixosModules.sops
+          ];
+        };
+      };
     };
-  };
 }

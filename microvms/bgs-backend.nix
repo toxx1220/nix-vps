@@ -68,6 +68,12 @@
       '';
     };
 
+    services.postgresqlBackup = {
+      enable = true;
+      databases = [ "bgs_db" ];
+      location = "/var/lib/postgresql/backups";
+    };
+
     systemd.services.bgs-backend = {
       description = "BGS Kotlin Backend";
       after = [ "postgresql.service" "network.target" ];

@@ -23,16 +23,20 @@ in {
   networking.hostName = "nixos-vps";
   time.timeZone = "Europe/Berlin";
 
-  # Bootloader
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
   # User configuration
-  users.users.${user} = {
-    isNormalUser = true;
-    extraGroups = [ "wheel" ];
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO"
+  users.users = {
+    ${user} = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" ];
+      openssh.authorizedKeys.keys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO"
+      ];
+    };
+    root.openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO" # TODO: replace?
     ];
   };
 
@@ -119,6 +123,9 @@ in {
               vm.config.networking.interfaces.eth0.ipv4.addresses).address;
             vmPort = toString vm.config.services.host-proxy.port;
           in ''
+            log {
+              output file /var/log/caddy/${name}.log
+            }
             reverse_proxy ${vmIp}:${vmPort}
           '';
         };
@@ -126,14 +133,13 @@ in {
     in lib.mapAttrs' mkCaddyEntry proxyEnabledVms;
   };
 
-  # Host-level Sops (for host secrets)
   sops = {
     defaultSopsFile = ./secrets.yaml;
     age.keyFile = "/var/lib/sops-nix/key.txt";
   };
 
   # --- CLEAN TMPFILES RULES ---
-  # We automatically create data directories for any VM that defines a 'shares' path
+  # Automatically create data directories for any VM that defines a 'shares' path
   systemd.tmpfiles.rules = let
     # Extract all share sources from all enabled VMs
     allShares = lib.concatMap (vm: map (s: s.source) vm.config.microvm.shares)
@@ -142,8 +148,7 @@ in {
     vmDataPaths =
       lib.filter (path: lib.hasPrefix "/var/lib/microvms" path) allShares;
     # Create a rule for each path.
-    # Note: We use 0755 and root:root by default, but Postgres paths might need 0700 and UID 71.
-    # For simplicity, we'll stick to a robust default or handle postgres specifically.
+    # Note: Use 0755 and root:root by default, but Postgres paths might need 0700 and UID 71.
     mkRule = path: "d ${path} 0755 root root -";
   in map mkRule vmDataPaths ++ [
     # Specific override for Postgres data (needs strict permissions)
@@ -152,5 +157,25 @@ in {
 
   environment.systemPackages = with pkgs; [ micro btop tree git ];
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.auto-optimise-store = true;
+
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-older-than 30d";
+  };
+
+  system.autoUpgrade = {
+    enable = true;
+    flake = "github:toxx1220/nix-vps"; # TODO: adjust
+    flags = [
+      "--update-input"
+      "nixpkgs"
+      "-L" # print build logs
+    ];
+    dates = "02:00";
+    randomizedDelaySec = "45min";
+  };
+
   system.stateVersion = "25.11";
 }
