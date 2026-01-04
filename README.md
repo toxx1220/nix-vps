@@ -20,7 +20,9 @@ Use `nixos-anywhere` to partition the disk and install NixOS.
      --extra-files secrets-init/keys \
      passwordless-sudo@[host-ip]
    ```
-Note: This uses the `vps-arm` flake configuration. Adjust as needed.
+Notes:
+- This uses the `vps-arm` flake configuration. Adjust as needed.
+- Either use root or a passwordless-sudo user for deployment. (This command should work for most distros to prepare the machine: `echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/90-nixos-anywhere`)
 
 ## 2. Rebuild / Update (Existing System)
 Once installed, apply changes using `nixos-rebuild`:
