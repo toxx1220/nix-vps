@@ -31,7 +31,10 @@
       flake = {
         nixosConfigurations.vps-arm = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
-          specialArgs = { inherit inputs; };
+          specialArgs = {
+            inherit inputs;
+            device = "/dev/sda"; # TODO: run lsblk before deployment to check if this is correct
+          };
           modules = [
             inputs.disko.nixosModules.disko
             ./disko.nix
