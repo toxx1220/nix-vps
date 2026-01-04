@@ -4,7 +4,7 @@ let
   sshPort = 6969;
 
   # --- SERVICE TOGGLES ---
-  enableNannuoBot = true;
+  enableNannuoBot = false;
   enableBgsBackend = true;
 
   networkBridgeName = "br0";
@@ -122,7 +122,7 @@ in {
     };
   };
 
-  # MicroVM Host Configuration, toggle-able inside the module
+  # MicroVM Host Configuration, toggle-able via the flags at the top
   microvm.vms = (lib.optionalAttrs enableNannuoBot {
     nannuo-bot = mkVm {
       name = "nannuo-bot";
