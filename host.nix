@@ -29,7 +29,7 @@ in {
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  environment.systemPackages = with pkgs; [ micro btop tree git ];
+  environment.systemPackages = with pkgs; [ micro btop tree git uwufetch ];
 
   nix = {
     settings = {
