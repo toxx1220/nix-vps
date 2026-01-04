@@ -7,6 +7,7 @@ let
   enableNannuoBot = true;
   enableBgsBackend = true;
 
+  networkBridgeName = "br0";
   # Helper to define a MicroVM with standard boilerplate
   mkVm = { name, module, packageArg, package }: {
     autostart = true;
@@ -25,6 +26,37 @@ in {
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  environment.systemPackages = with pkgs; [ micro btop tree git ];
+
+  nix = {
+    settings = {
+      experimental-features = [ "nix-command" "flakes" ];
+      auto-optimise-store = true;
+    };
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 30d";
+    };
+  };
+
+  system.autoUpgrade = {
+    enable = true;
+    flake = "github:toxx1220/nix-vps"; # TODO: adjust
+    flags = [
+      "--update-input"
+      "nixpkgs"
+      "-L" # print build logs
+    ];
+    dates = "02:00";
+    randomizedDelaySec = "45min";
+  };
+
+  sops = {
+    defaultSopsFile = ./secrets.yaml;
+    age.keyFile = "/var/lib/sops-nix/key.txt";
+  };
 
   # User configuration
   users.users = {
@@ -76,18 +108,18 @@ in {
       enable = true;
       allowedTCPPorts = [ sshPort 443 ];
     };
-  };
 
-  networking.bridges."br0".interfaces = [ ];
-  networking.interfaces."br0".ipv4.addresses = [{
-    address = "10.0.0.1";
-    prefixLength = 24;
-  }];
-
-  networking.nat = {
-    enable = true;
-    internalInterfaces = [ "br0" ];
-    externalInterface = "eth0";
+    # microVM setup
+    bridges.${networkBridgeName}.interfaces = [ ];
+    interfaces.${networkBridgeName}.ipv4.addresses = [{
+      address = "10.0.0.1";
+      prefixLength = 24;
+    }];
+    nat = {
+      enable = true;
+      internalInterfaces = [ networkBridgeName ];
+      externalInterface = "eth0";
+    };
   };
 
   # MicroVM Host Configuration, toggle-able inside the module
@@ -142,11 +174,6 @@ in {
     in lib.mapAttrs' mkCaddyEntry proxyEnabledVms;
   };
 
-  sops = {
-    defaultSopsFile = ./secrets.yaml;
-    age.keyFile = "/var/lib/sops-nix/key.txt";
-  };
-
   # --- CLEAN TMPFILES RULES ---
   # Automatically create data directories for any VM that defines a 'shares' path
   systemd.tmpfiles.rules = let
@@ -163,28 +190,6 @@ in {
     # Specific override for Postgres data (needs strict permissions)
     "d /var/lib/microvms/bgs-backend/data 0700 71 71 -"
   ];
-
-  environment.systemPackages = with pkgs; [ micro btop tree git ];
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nix.settings.auto-optimise-store = true;
-
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 30d";
-  };
-
-  system.autoUpgrade = {
-    enable = true;
-    flake = "github:toxx1220/nix-vps"; # TODO: adjust
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "-L" # print build logs
-    ];
-    dates = "02:00";
-    randomizedDelaySec = "45min";
-  };
 
   system.stateVersion = "25.11";
 }
