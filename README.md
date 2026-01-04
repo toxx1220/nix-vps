@@ -3,14 +3,15 @@
 This project manages a NixOS VPS host and its MicroVMs using Flakes, Disko, and SOPS-nix.
 
 ## Secrets & SOPS
-Decryption requires an Age key at `/var/lib/sops-nix/key.txt` on the target host.
+Decryption requires a SOPS-compatible private key (Age or SSH) at `/var/lib/sops-nix/key.txt` on the target host.
 
 ## 1. Initial Deployment (Fresh Install)
 Use `nixos-anywhere` to partition the disk and install NixOS.
 
 1. Prepare the key locally:
    `mkdir -p secrets-init/keys/var/lib/sops-nix`
-   `cp ~/.config/sops/age/keys.txt secrets-init/keys/var/lib/sops-nix/key.txt`
+   `cp /path/to/your/private/key secrets-init/keys/var/lib/sops-nix/key.txt`
+   *(Note: The key must be the one used to encrypt `secrets.yaml`)*
 
 2. Run deployment:
    ```bash
@@ -32,3 +33,4 @@ nixos-rebuild switch --flake .#vps-arm \
 
 ## 3. MicroVMs
 VMs are defined in `microvms/` and toggled in `host.nix`. They share a common base configuration in `microvms/common.nix`.
+
