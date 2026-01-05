@@ -37,6 +37,7 @@
           };
           modules = [
             inputs.disko.nixosModules.disko
+            inputs.impermanence.nixosModules.impermanence
             ./disko.nix
             ./host.nix
             inputs.microvm.nixosModules.host

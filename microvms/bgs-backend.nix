@@ -25,12 +25,20 @@
         mac = "02:00:00:00:00:03";
       }];
       shares = [{
+        # IMPERMANENCE NOTE: This source path is on the host.
+        # Since /var/lib/microvms is persisted in host.nix, 
+        # this database data will survive host reboots.
         source = "/var/lib/microvms/bgs-backend/data";
         mountPoint = "/var/lib/postgresql";
         tag = "db-data";
         proto = "virtiofs";
       }];
     };
+
+    # TODO: When enabling this service, ensure the host directory 
+    # /var/lib/microvms/bgs-backend/data is created with correct 
+    # permissions (UID 71 for Postgres) via systemd.tmpfiles on the host.
+    # The current host.nix already has a tmpfiles rule for this.
 
     services.postgresql = {
       enable = true;

@@ -65,11 +65,30 @@ in {
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
-    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+    # Point directly to the persistent path to ensure keys are available 
+    # as early as possible during boot, bypassing the bind-mount.
+    age.sshKeyPaths = [ "/persistent/etc/ssh/ssh_host_ed25519_key" ];
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
     };
+  };
+
+  # This stays persistent
+  environment.persistence."/persistent" = {
+    hideMounts = true;
+    directories = [
+      "/var/log"               # System logs
+      "/var/lib/nixos"         # UID/GID maps (prevents permission issues)
+      "/var/lib/systemd/coredump"
+      "/var/lib/microvms"      # VM disk images and shared data
+      "/var/lib/caddy"         # SSL certificates
+      "/var/lib/fail2ban"      # Ban history
+      "/etc/ssh"               # Host SSH keys
+    ];
+    files = [
+      "/etc/machine-id"        # Stable identifier for logs and networking
+    ];
   };
 
   users = {
