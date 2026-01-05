@@ -36,11 +36,6 @@ in {
   boot.loader.efi.canTouchEfiVariables = true;
   boot.initrd.availableKernelModules = [ "virtio_pci" "virtio_blk" "virtio_scsi" "virtio_net" ];
   boot.kernelParams = [ "console=ttyS0" ];
-  # Force permissions on persistent keys before the root fs is even mounted
-  boot.initrd.postMountCommands = ''
-    mkdir -p /mnt-root/persistent/etc/ssh
-    chmod 600 /mnt-root/persistent/etc/ssh/ssh_host_ed25519_key
-  '';
 
   environment.systemPackages = with pkgs; [ micro btop tree git uwufetch ];
 
@@ -70,20 +65,17 @@ in {
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
-    # Look in both paths to ensure the first boot works even if
-    # the bind-mount hasn't initialized yet.
-    age.sshKeyPaths = [
-      "/etc/ssh/ssh_host_ed25519_key"
-      "/persistent/etc/ssh/ssh_host_ed25519_key"
-    ];
+    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
     };
   };
 
-  # This stays persistent
+  # Persistent storage - neededForBoot ensures bind-mounts happen early
   fileSystems."/persistent".neededForBoot = true;
+  fileSystems."/etc/ssh".neededForBoot = true;
+
   environment.persistence."/persistent" = {
     hideMounts = true;
     directories = [
@@ -95,7 +87,8 @@ in {
       "/var/lib/fail2ban"      # Ban history
       {
         directory = "/etc/ssh";
-        mode = "0755";
+        mode = "u=rwx,g=rx,o=rx";
+        user = "root";
       }
     ];
     files = [
@@ -132,6 +125,11 @@ in {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
     };
+    # Standard path - impermanence bind-mounts /persistent/etc/ssh here
+    hostKeys = [{
+      path = "/etc/ssh/ssh_host_ed25519_key";
+      type = "ed25519";
+    }];
   };
 
   services.fail2ban = {
