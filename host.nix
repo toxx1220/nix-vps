@@ -2,6 +2,7 @@
 let
   user = "toxx";
   sshPort = 22; # TODO: change?
+  hostName = "oracle-vps";
 
   # --- SERVICE TOGGLES ---
   enableNannuoBot = false;
@@ -28,7 +29,7 @@ let
   };
 
 in {
-  networking.hostName = "${user}-vps";
+  networking.hostName = hostName;
   time.timeZone = "Europe/Berlin";
 
   boot.loader.systemd-boot.enable = true;
@@ -210,7 +211,10 @@ in {
     # Create a rule for each path.
     # Note: Use 0755 and root:root by default, but Postgres paths might need 0700 and UID 71.
     mkRule = path: "d ${path} 0755 root root -";
-  in map mkRule vmDataPaths ++ [
+  in [
+    "d /var/lib/microvms/sops-shared 0755 root root -"
+    "L+ /var/lib/microvms/sops-shared/key.txt - - - - /etc/ssh/ssh_host_ed25519_key"
+  ] ++ map mkRule vmDataPaths ++ [
     # Specific override for Postgres data (needs strict permissions) # TODO: remove?
     "d /var/lib/microvms/bgs-backend/data 0700 71 71 -"
   ];

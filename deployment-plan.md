@@ -2,7 +2,7 @@
 
 Phase A: Initial "Big Bang" (nixos-anywhere)
 This is for a fresh VPS. It will wipe the disk and install your config.
-1. Command: nix run github:nix-community/nixos-anywhere -- --flake .#vps root@<YOUR_VPS_IP>
+1. Command: nix run github:nix-community/nixos-anywhere -- --flake .#vps root@[host-ip]
 2. What happens:
     * It connects via SSH.
     * It runs Disko to partition your drive.
@@ -11,7 +11,12 @@ This is for a fresh VPS. It will wipe the disk and install your config.
 
 Phase B: Iterative Updates
 Once NixOS is running, you don't need nixos-anywhere anymore.
-1. Command: nixos-rebuild switch --flake .#vps --target-host root@<YOUR_VPS_IP>
+1. Command: `nixos-rebuild switch --flake .#vps --target-host root@[host-ip]` or from darwin:
+```bash 
+nix run nixpkgs#nixos-rebuild -- switch --flake .#vps-arm \
+ --target-host root@[host-ip] \
+ --build-host root@[host-ip]
+```
 2. What happens:
     * Nix builds the new configuration (locally or on the VPS).
     * It copies only the changed files to the VPS.

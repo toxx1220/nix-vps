@@ -25,8 +25,8 @@
       hypervisor = "qemu";
       # Shared SOPS key
       shares = [{
-        source = "/var/lib/sops-nix/key.txt";
-        mountPoint = "/var/lib/sops-nix/key.txt";
+        source = "/var/lib/microvms/sops-shared";
+        mountPoint = "/var/lib/sops-nix";
         tag = "sops-key";
         proto = "virtiofs";
       }];
