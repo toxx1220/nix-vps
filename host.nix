@@ -65,9 +65,12 @@ in {
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
-    # Point directly to the persistent path to ensure keys are available 
-    # as early as possible during boot, bypassing the bind-mount.
-    age.sshKeyPaths = [ "/persistent/etc/ssh/ssh_host_ed25519_key" ];
+    # Look in both paths to ensure the first boot works even if
+    # the bind-mount hasn't initialized yet.
+    age.sshKeyPaths = [
+      "/etc/ssh/ssh_host_ed25519_key"
+      "/persistent/etc/ssh/ssh_host_ed25519_key"
+    ];
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
