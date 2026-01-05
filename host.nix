@@ -36,6 +36,11 @@ in {
   boot.loader.efi.canTouchEfiVariables = true;
   boot.initrd.availableKernelModules = [ "virtio_pci" "virtio_blk" "virtio_scsi" "virtio_net" ];
   boot.kernelParams = [ "console=ttyS0" ];
+  # Force permissions on persistent keys before the root fs is even mounted
+  boot.initrd.postMountCommands = ''
+    mkdir -p /mnt-root/persistent/etc/ssh
+    chmod 600 /mnt-root/persistent/etc/ssh/ssh_host_ed25519_key
+  '';
 
   environment.systemPackages = with pkgs; [ micro btop tree git uwufetch ];
 
@@ -88,7 +93,10 @@ in {
       "/var/lib/microvms"      # VM disk images and shared data
       "/var/lib/caddy"         # SSL certificates
       "/var/lib/fail2ban"      # Ban history
-      "/etc/ssh"               # Host SSH keys
+      {
+        directory = "/etc/ssh";
+        mode = "0755";
+      }
     ];
     files = [
       "/etc/machine-id"        # Stable identifier for logs and networking
@@ -118,12 +126,6 @@ in {
   services.openssh = {
     enable = true;
     ports = [ sshPort ];
-    hostKeys = [
-      {
-        path = "/persistent/etc/ssh/ssh_host_ed25519_key";
-        type = "ed25519";
-      }
-    ];
     settings = {
       AllowUsers = [ "root" user ];
       PermitRootLogin = "prohibit-password";
@@ -243,8 +245,6 @@ in {
   in [
     "d /var/lib/microvms/sops-shared 0755 root root -"
     "L+ /var/lib/microvms/sops-shared/key.txt - - - - /etc/ssh/ssh_host_ed25519_key"
-    # Troubleshoot try: set ssh permissions manually.
-    "z /persistent/etc/ssh/ssh_host_ed25519_key 0600 root root -"
   ] ++ map mkRule vmDataPaths ++ [
     # Specific override for Postgres data (needs strict permissions) # TODO: remove?
     "d /var/lib/microvms/bgs-backend/data 0700 71 71 -"
