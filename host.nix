@@ -33,6 +33,8 @@ in {
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.initrd.availableKernelModules = [ "virtio_pci" "virtio_blk" "virtio_scsi" "virtio_net" ];
+  boot.kernelParams = [ "console=ttyS0" ];
 
   environment.systemPackages = with pkgs; [ micro btop tree git uwufetch ];
 
@@ -116,6 +118,7 @@ in {
   };
 
   networking = {
+    useDHCP = true;
     networkmanager.enable = false;
     firewall = {
       enable = true;
