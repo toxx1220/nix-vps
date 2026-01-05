@@ -118,6 +118,12 @@ in {
   services.openssh = {
     enable = true;
     ports = [ sshPort ];
+    hostKeys = [
+      {
+        path = "/persistent/etc/ssh/ssh_host_ed25519_key";
+        type = "ed25519";
+      }
+    ];
     settings = {
       AllowUsers = [ "root" user ];
       PermitRootLogin = "prohibit-password";
@@ -237,6 +243,8 @@ in {
   in [
     "d /var/lib/microvms/sops-shared 0755 root root -"
     "L+ /var/lib/microvms/sops-shared/key.txt - - - - /etc/ssh/ssh_host_ed25519_key"
+    # Troubleshoot try: set ssh permissions manually.
+    "z /persistent/etc/ssh/ssh_host_ed25519_key 0600 root root -"
   ] ++ map mkRule vmDataPaths ++ [
     # Specific override for Postgres data (needs strict permissions) # TODO: remove?
     "d /var/lib/microvms/bgs-backend/data 0700 71 71 -"
