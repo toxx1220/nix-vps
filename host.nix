@@ -75,6 +75,7 @@ in {
   };
 
   # This stays persistent
+  fileSystems."/persistent".neededForBoot = true;
   environment.persistence."/persistent" = {
     hideMounts = true;
     directories = [

@@ -4,10 +4,11 @@
     # Mount root (/) as a tmpfs (RAM disk).
     # Everything not explicitly persisted is wiped on every reboot.
     nodev."/" = {
-      tmpfs = {
-        size = "1G";
-        mountOptions = [ "defaults" "size=1G" "mode=755" ];
-      };
+      fsType = "tmpfs";
+      mountOptions = [
+        "size=1G"
+        "mode=755"
+      ];
     };
     disk.main = {
       inherit device;

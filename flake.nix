@@ -16,6 +16,7 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    impermanence.url = "github:nix-community/impermanence";
     nannuo-bot = { url = "github:toxx1220/nannuo-bot"; };
     bgs-backend = { url = "github:toxx1220/bgs_backend_V2?dir=deployment"; };
   };
