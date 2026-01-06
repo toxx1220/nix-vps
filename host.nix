@@ -65,19 +65,24 @@ in {
 
   sops = {
     defaultSopsFile = ./secrets.yaml;
-    age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+    # Both paths needed: /persistent/... for initial install, /etc/ssh/... after boot
+    age.sshKeyPaths = [
+      "/persistent/etc/ssh/ssh_host_ed25519_key"
+      "/etc/ssh/ssh_host_ed25519_key"
+    ];
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
     };
   };
 
-  # Persistent storage - neededForBoot ensures bind-mounts happen early
+  # Persistent storage - neededForBoot ensures mounts happen in initrd
   fileSystems."/persistent".neededForBoot = true;
   fileSystems."/etc/ssh".neededForBoot = true;
 
   environment.persistence."/persistent" = {
     hideMounts = true;
+    enableWarnings = false;
     directories = [
       "/var/log"               # System logs
       "/var/lib/nixos"         # UID/GID maps (prevents permission issues)
@@ -125,12 +130,21 @@ in {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
     };
-    # Standard path - impermanence bind-mounts /persistent/etc/ssh here
+    # Point directly to persistent path to ensure key is found regardless of bind-mount timing
     hostKeys = [{
-      path = "/etc/ssh/ssh_host_ed25519_key";
+      path = "/persistent/etc/ssh/ssh_host_ed25519_key";
       type = "ed25519";
     }];
   };
+
+  # Ensure SSH directory exists before sshd tries to use it
+  systemd.services.sshd.preStart = lib.mkBefore ''
+    mkdir -p /persistent/etc/ssh
+    chmod 755 /persistent/etc/ssh
+    if [ -f /persistent/etc/ssh/ssh_host_ed25519_key ]; then
+      chmod 600 /persistent/etc/ssh/ssh_host_ed25519_key
+    fi
+  '';
 
   services.fail2ban = {
     enable = true;
@@ -242,7 +256,7 @@ in {
     mkRule = path: "d ${path} 0755 root root -";
   in [
     "d /var/lib/microvms/sops-shared 0755 root root -"
-    "L+ /var/lib/microvms/sops-shared/key.txt - - - - /etc/ssh/ssh_host_ed25519_key"
+    "L+ /var/lib/microvms/sops-shared/key.txt - - - - /persistent/etc/ssh/ssh_host_ed25519_key"
   ] ++ map mkRule vmDataPaths ++ [
     # Specific override for Postgres data (needs strict permissions) # TODO: remove?
     "d /var/lib/microvms/bgs-backend/data 0700 71 71 -"
