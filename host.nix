@@ -20,7 +20,6 @@ let
         [ ./microvms/common.nix module inputs.sops-nix.nixosModules.sops ];
       _module.args = {
         inherit inputs;
-        hostBridgeName = networkBridgeName;
         hostGatewayIp = gatewayIp;
       } // (lib.optionalAttrs (packageArg != null) {
         ${packageArg} = package;
@@ -224,16 +223,21 @@ in {
         name =
           vm.config.services.host-proxy.domain; # New Key: e.g. "api.example.com"
         value = { # New Value: Caddy config
-          # Get the first IP address defined in the VM
           extraConfig = let
-            vmIp = (lib.head
-              vm.config.networking.interfaces.eth0.ipv4.addresses).address;
-            vmPort = toString vm.config.services.host-proxy.port;
+            hostPort = vm.config.services.host-proxy.hostPort;
+            # Use localhost:hostPort for user-mode networking, or VM IP for bridge/tap
+            proxyTarget = if hostPort != null then
+              "127.0.0.1:${toString hostPort}"
+            else let
+              vmIp = (lib.head
+                vm.config.networking.interfaces.eth0.ipv4.addresses).address;
+              vmPort = toString vm.config.services.host-proxy.port;
+            in "${vmIp}:${vmPort}";
           in ''
             log {
               output file /var/log/caddy/${name}.log
             }
-            reverse_proxy ${vmIp}:${vmPort}
+            reverse_proxy ${proxyTarget}
           '';
         };
       };
