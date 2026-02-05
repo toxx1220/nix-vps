@@ -4,7 +4,7 @@
 
     services.host-proxy = {
       enable = true;
-      domain = "test.local";
+      domain = "oracle.toxx.dev";
       port = 8080;
       hostPort = 10020;
     };

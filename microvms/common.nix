@@ -1,4 +1,5 @@
-{ lib, hostGatewayIp, ... }: {
+{ lib, hostGatewayIp, ... }:
+{
   # Shared options for host reverse proxy
   options.services.host-proxy = {
     enable = lib.mkEnableOption "host reverse proxy";
@@ -34,15 +35,24 @@
       cpu = "max";
       qemu.machineOpts = {
         accel = "tcg";
-        gic-version = "max";  # Required for aarch64
+        gic-version = "max"; # Required for aarch64
       };
       # Shared SOPS key
-      shares = [{
-        source = "/var/lib/microvms/sops-shared";
-        mountPoint = "/var/lib/sops-nix";
-        tag = "sops-key";
-        proto = "virtiofs";
-      }];
+      shares = [
+        {
+          source = "/var/lib/microvms/sops-shared";
+          mountPoint = "/var/lib/sops-nix";
+          tag = "sops-key";
+          proto = "virtiofs";
+        }
+        # Share host's /nix/store as read-only
+        {
+          source = "/nix/store";
+          mountPoint = "/nix/store";
+          tag = "store";
+          proto = "virtiofs"; # virtiofs mounts are read-only by default when not using writableStoreOverlay
+        }
+      ];
     };
   };
 }
