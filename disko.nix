@@ -1,4 +1,8 @@
-{ device ? "/dev/sda", ... }: {
+{
+  device ? "/dev/sda",
+  ...
+}:
+{
   disko.devices = {
     # nodev defines filesystems that aren't tied to a physical partition.
     # Mount root (/) as a tmpfs (RAM disk).

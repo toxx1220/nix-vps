@@ -1,5 +1,5 @@
 {
-  description = "NixOS VPS with MicroVMs";
+  description = "NixOS VPS with Native Containers";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -8,40 +8,51 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    microvm = {
-      url = "github:astro/microvm.nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     impermanence.url = "github:nix-community/impermanence";
-    nannuo-bot = { url = "github:toxx1220/nannuo-bot"; };
-    bgs-backend = { url = "github:toxx1220/bgs_backend_V2?dir=deployment"; };
+    nannuo-bot = {
+      url = "github:toxx1220/nannuo-bot";
+    };
+    bgs-backend = {
+      url = "github:toxx1220/bgs_backend_V2?dir=deployment";
+    };
   };
 
-  outputs = inputs@{ flake-parts, ... }:
+  outputs =
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems =
-        [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
-        devShells.default =
-          pkgs.mkShell { packages = [ pkgs.nixpkgs-fmt pkgs.sops ]; };
-      };
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      perSystem =
+        {
+          pkgs,
+          ...
+        }:
+        {
+          devShells.default = pkgs.mkShell {
+            packages = [
+              pkgs.nixpkgs-fmt
+              pkgs.sops
+            ];
+          };
+        };
       flake = {
         nixosConfigurations.vps-arm = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           specialArgs = {
             inherit inputs;
-            device = "/dev/sda"; # TODO: run lsblk before deployment to check if this is correct
+            device = "/dev/sda";
           };
           modules = [
             inputs.disko.nixosModules.disko
             inputs.impermanence.nixosModules.impermanence
             ./disko.nix
             ./host.nix
-            inputs.microvm.nixosModules.host
             inputs.sops-nix.nixosModules.sops
           ];
         };

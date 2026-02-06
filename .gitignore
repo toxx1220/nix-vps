@@ -1,4 +1,4 @@
 .idea/
 .direnv/
 secrets-init/
-temp-dotfiles/
+temp_dotfiles
