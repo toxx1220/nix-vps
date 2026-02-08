@@ -232,7 +232,6 @@ in
 
   # Persistent storage - neededForBoot ensures mounts happen in initrd
   fileSystems."/persistent".neededForBoot = true;
-  fileSystems."/etc/ssh".neededForBoot = true;
 
   environment.persistence."/persistent" = {
     hideMounts = true;
