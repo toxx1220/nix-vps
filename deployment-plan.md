@@ -31,11 +31,11 @@ nix run github:nix-community/nixos-anywhere -- \
 
 ## Phase B: GitOps Auto-Updates
 
-Once NixOS is running, the system updates automatically via GitOps workflow:
+Once NixOS is running, the system updates automatically via a GitOps workflow:
 
 ### Automatic Updates
-- **On Git Push:** Garnix CI builds → Webhook triggers → VPS switches to new config
-- **Weekly Timer:** Every Sunday at 03:00, the VPS updates all flake inputs
+- **On Git Push:** Garnix CI builds the system closure → Webhook triggers the host → VPS switches to the new configuration using `nh`.
+- **Weekly Timer:** Every Sunday at 03:00, the VPS updates all flake inputs and applies updates automatically.
 
 ### Manual Update (if needed)
 If you need to manually update the system:
@@ -53,6 +53,7 @@ When the system rebuilds, Nix calculates the "diff":
 - If you changed a port in Caddy → Only Caddy restarts
 - If you updated the bot/backend code → Only that container restarts
 - Services that didn't change experience **zero downtime**
+- Nix handles granular restarts, ensuring only the affected units are touched.
 
 ### Changing `disko.nix`
 **⚠️ Be careful here.** Disko defines your physical hard drive layout (partitions, filesystems).
