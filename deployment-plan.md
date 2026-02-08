@@ -1,34 +1,62 @@
-2. The Deployment Plan
+# Deployment Plan
 
-Phase A: Initial "Big Bang" (nixos-anywhere)
-This is for a fresh VPS. It will wipe the disk and install your config.
-1. Command: nix run github:nix-community/nixos-anywhere -- --flake .#vps root@[host-ip]
-2. What happens:
-    * It connects via SSH.
-    * It runs Disko to partition your drive.
-    * It installs NixOS.
-    * It reboots into your new system.
+## Phase A: Initial "Big Bang" (nixos-anywhere)
 
-Phase B: Iterative Updates
-Once NixOS is running, you don't need nixos-anywhere anymore.
-1. Command: `nixos-rebuild switch --flake .#vps --target-host root@[host-ip]` or from darwin:
-```bash 
-nix run nixpkgs#nixos-rebuild -- switch --flake .#vps-arm \
- --target-host root@[host-ip] \
- --build-host root@[host-ip]
+This is for a fresh VPS. **It will wipe the disk** and install your config.
+
+### Pre-requisite
+Enable passwordless sudo on target (for Oracle Cloud with `opc` user):
+```bash
+echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/90-nixos-anywhere
 ```
-2. What happens:
-    * Nix builds the new configuration (locally or on the VPS).
-    * It copies only the changed files to the VPS.
-    * It switches the running services to the new versions.
-    * Zero downtime for services that didn't change.
 
-  ---
+### Command
+```bash
+nix run github:nix-community/nixos-anywhere -- \
+  --flake .#vps-arm \
+  --extra-files ./secrets-init/keys \
+  passwordless-sudo@[host-ip]
+  
+  # For VPS with enough RAM (more than 1.5GB) and cpu, the flag --build-on-remote passwordless-sudo@[host-ip] can be used to avoid cross-compilation issues.
+```
 
-3. What happens when you change things?
+### What happens
+1. Connects via SSH
+2. Runs Disko to partition your drive
+3. **Copies the pre-generated SSH keys to `/persistent/etc/ssh`** (needed for SOPS to decrypt secrets)
+4. Installs NixOS
+5. Reboots into your new system
 
-* Changing `host.nix` or `microvms/*.nix`: When you run nixos-rebuild switch, Nix calculates the "diff". If you changed a port in Caddy, only Caddy restarts. If you updated the Kotlin backend code, only that MicroVM restarts.
-* Changing `disko.nix`: Be careful here. Disko defines your physical hard drive layout (partitions, filesystems).
-    * If you change a mount point, Nix will try to adjust it.
-    * If you change partition sizes or types, nixos-rebuild usually cannot do this on a live system. You would typically need to re-run a fresh install or manually resize partitions (which is risky).
-    * Rule of thumb: Get your disko.nix right once, then leave it alone.
+---
+
+## Phase B: GitOps Auto-Updates
+
+Once NixOS is running, the system updates automatically via GitOps workflow:
+
+### Automatic Updates
+- **On Git Push:** Garnix CI builds → Webhook triggers → VPS switches to new config
+- **Weekly Timer:** Every Sunday at 03:00, the VPS updates all flake inputs
+
+### Manual Update (if needed)
+If you need to manually update the system:
+```bash
+ssh root@[host-ip]
+sudo nh os switch --update github:toxx1220/nix-vps -- -L
+```
+
+---
+
+## What Happens When You Change Things?
+
+### Changing `host.nix` or `containers/*.nix`
+When the system rebuilds, Nix calculates the "diff":
+- If you changed a port in Caddy → Only Caddy restarts
+- If you updated the bot/backend code → Only that container restarts
+- Services that didn't change experience **zero downtime**
+
+### Changing `disko.nix`
+**⚠️ Be careful here.** Disko defines your physical hard drive layout (partitions, filesystems).
+- If you change a mount point, Nix will try to adjust it
+- If you change partition sizes or types, the system **cannot** do this on a live system
+  - You would need to re-run a fresh install or manually resize partitions (risky)
+- **Rule of thumb:** Get your `disko.nix` right once, then leave it alone

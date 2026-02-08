@@ -1,12 +1,18 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  containerName,
+  containerDomain,
+  containerPort,
+  ...
+}:
 {
   config = {
-    networking.hostName = "test-container";
+    networking.hostName = containerName;
 
     services.host-proxy = {
       enable = true;
-      domain = "oracle.toxx.dev";
-      port = 8080;
+      domain = containerDomain;
+      port = containerPort;
     };
 
     systemd.services.test-server = {

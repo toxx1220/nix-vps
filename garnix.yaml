@@ -1,0 +1,15 @@
+builds:
+  include:
+    - nixosConfigurations.*
+    - packages.*
+    - devShells.*
+    - checks.*
+
+deployments:
+  - name: vps-redeploy
+    on:
+      branch: main
+    script: |
+      SIG=$(echo -n "" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
+      curl -X POST https://deploy.toxx.dev/hooks/redeploy \
+        -H "X-Hub-Signature-256: sha256=$SIG"

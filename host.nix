@@ -10,13 +10,53 @@ let
   sshPort = 22;
   hostName = "oracle-vps";
 
+  repoUrl = "github:toxx1220/nix-vps";
+  updateCommand = "${pkgs.nh}/bin/nh os switch --update ${repoUrl} -- -L";
+  flakeUpdateServiceName = "flake-update";
+
+  # --- DOMAIN CONFIGURATION ---
+  domains = {
+    webhook = "deploy.toxx.dev";
+    bgsBackend = "bgsearch.toxx.dev";
+    testContainer = "oracle.toxx.dev";
+  };
+
+  # --- CONTAINER NAMES ---
+  containerNames = {
+    nannuoBot = "nannuo-bot";
+    bgsBackend = "bgs-backend";
+    testContainer = "test-container";
+  };
+
   # --- SERVICE TOGGLES ---
   enableNannuoBot = false;
   enableBgsBackend = false;
   enableTestContainer = true;
 
+  webhookPort = 9000;
+
+  # --- NETWORK CONFIGURATION ---
   networkBridgeName = "br0";
   gatewayIp = "10.0.0.1";
+
+  # --- CONTAINER REGISTRY ---
+  containerRegistry = {
+    ${containerNames.nannuoBot} = {
+      ip = "10.0.0.11";
+      proxyDomain = "";
+      proxyPort = 0;
+    };
+    ${containerNames.bgsBackend} = {
+      ip = "10.0.0.12";
+      proxyDomain = domains.bgsBackend;
+      proxyPort = 8080;
+    };
+    ${containerNames.testContainer} = {
+      ip = "10.0.0.10";
+      proxyDomain = domains.testContainer;
+      proxyPort = 8080;
+    };
+  };
 
   # Helper to define a NixOS Container with standard boilerplate
   mkContainer =
@@ -26,6 +66,8 @@ let
       module,
       packageArg ? null,
       package ? null,
+      proxyDomain ? "",
+      proxyPort ? 0,
     }:
     {
       autoStart = true;
@@ -50,6 +92,9 @@ let
           # Pass inputs and other args to the container
           _module.args = {
             inherit inputs;
+            containerName = name;
+            containerDomain = proxyDomain;
+            containerPort = proxyPort;
           }
           // (lib.optionalAttrs (packageArg != null) { ${packageArg} = package; });
         };
@@ -85,7 +130,15 @@ in
     tree
     git
     uwufetch
+    nh
   ];
+
+  programs.nh = {
+    enable = true;
+    clean.enable = true;
+    clean.extraArgs = "--keep 3 --keep-since 3d";
+    flake = repoUrl;
+  };
 
   nix = {
     settings = {
@@ -93,25 +146,18 @@ in
         "nix-command"
         "flakes"
       ];
-      auto-optimise-store = true;
-    };
-    gc = {
-      automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 30d";
-    };
-  };
 
-  system.autoUpgrade = {
-    enable = true;
-    flake = "github:toxx1220/nix-vps"; # TODO: adjust
-    flags = [
-      "--update-input"
-      "nixpkgs"
-      "-L" # print build logs
-    ];
-    dates = "02:00";
-    randomizedDelaySec = "45min";
+      # Store optimization - hard-links identical files to save disk space
+      auto-optimise-store = true;
+
+      # Garnix CI binary cache
+      extra-substituters = [
+        "https://cache.garnix.io"
+      ];
+      extra-trusted-public-keys = [
+        "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+      ];
+    };
   };
 
   sops = {
@@ -123,8 +169,57 @@ in
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
+      webhook-secret = { };
     };
   };
+
+  services.webhook = {
+    enable = true;
+    port = webhookPort;
+    hooks = {
+      redeploy = {
+        execute-command = "${
+          pkgs.writeShellApplication {
+            name = "redeploy";
+            runtimeInputs = with pkgs; [
+              git
+              nh
+              nixos-rebuild
+            ];
+            text = ''
+              sudo ${updateCommand}
+            '';
+          }
+        }/bin/redeploy";
+        command-working-directory = "/tmp";
+        response-message = "Redeploy triggered";
+        incoming-payload-content-type = "application/json";
+        http-methods = [ "POST" ];
+        trigger-rule = {
+          match = {
+            type = "payload-hmac-sha256";
+            secret-key-path = config.sops.secrets.webhook-secret.path;
+            parameter = {
+              source = "header";
+              name = "X-Hub-Signature-256";
+            };
+          };
+        };
+      };
+    };
+  };
+
+  security.sudo.extraRules = [
+    {
+      users = [ "webhook" ];
+      commands = [
+        {
+          command = "${pkgs.nh}/bin/nh";
+          options = [ "NOPASSWD" ];
+        }
+      ];
+    }
+  ];
 
   # Persistent storage - neededForBoot ensures mounts happen in initrd
   fileSystems."/persistent".neededForBoot = true;
@@ -134,11 +229,11 @@ in
     hideMounts = true;
     enableWarnings = false;
     directories = [
-      "/var/log"               # System logs
-      "/var/lib/nixos"         # UID/GID maps (prevents permission issues)
+      "/var/log" # System logs
+      "/var/lib/nixos" # UID/GID maps (prevents permission issues)
       "/var/lib/systemd/coredump"
       "/var/lib/containers" # Persist all container root filesystems
-      "/var/lib/caddy"  # SSL certificates
+      "/var/lib/caddy" # SSL certificates
       "/var/lib/fail2ban" # Ban history
       {
         directory = "/etc/ssh";
@@ -147,7 +242,7 @@ in
       }
     ];
     files = [
-      "/etc/machine-id"        # Stable identifier for logs and networking
+      "/etc/machine-id" # Stable identifier for logs and networking
     ];
   };
 
@@ -245,28 +340,34 @@ in
   # Native NixOS Containers
   containers =
     (lib.optionalAttrs enableNannuoBot {
-      nannuo-bot = mkContainer {
-        name = "nannuo-bot";
-        address = "10.0.0.11";
-        module = ./containers/nannuo-bot.nix; # Assuming migrated later or existing
+      ${containerNames.nannuoBot} = mkContainer {
+        name = containerNames.nannuoBot;
+        address = containerRegistry.${containerNames.nannuoBot}.ip;
+        module = ./containers/nannuo-bot.nix;
         packageArg = "bot-package";
         package = inputs.nannuo-bot.packages.${pkgs.system}.default;
+        proxyDomain = containerRegistry.${containerNames.nannuoBot}.proxyDomain;
+        proxyPort = containerRegistry.${containerNames.nannuoBot}.proxyPort;
       };
     })
     // (lib.optionalAttrs enableBgsBackend {
-      bgs-backend = mkContainer {
-        name = "bgs-backend";
-        address = "10.0.0.12";
-        module = ./containers/bgs-backend.nix; # Assuming migrated later or existing
+      ${containerNames.bgsBackend} = mkContainer {
+        name = containerNames.bgsBackend;
+        address = containerRegistry.${containerNames.bgsBackend}.ip;
+        module = ./containers/bgs-backend.nix;
         packageArg = "backend-package";
         package = inputs.bgs-backend.packages.${pkgs.system}.default;
+        proxyDomain = containerRegistry.${containerNames.bgsBackend}.proxyDomain;
+        proxyPort = containerRegistry.${containerNames.bgsBackend}.proxyPort;
       };
     })
     // (lib.optionalAttrs enableTestContainer {
-      test-container = mkContainer {
-        name = "test-container";
-        address = "10.0.0.10";
+      ${containerNames.testContainer} = mkContainer {
+        name = containerNames.testContainer;
+        address = containerRegistry.${containerNames.testContainer}.ip;
         module = ./containers/test-container.nix;
+        proxyDomain = containerRegistry.${containerNames.testContainer}.proxyDomain;
+        proxyPort = containerRegistry.${containerNames.testContainer}.proxyPort;
       };
     });
 
@@ -298,8 +399,40 @@ in
               '';
           };
         };
+
+        containerHosts = lib.mapAttrs' mkCaddyEntry proxyEnabledContainers;
+
+        staticHosts = {
+          ${domains.webhook} = {
+            extraConfig = "reverse_proxy localhost:${toString webhookPort}";
+          };
+        };
       in
-      lib.mapAttrs' mkCaddyEntry proxyEnabledContainers;
+      containerHosts // staticHosts;
+  };
+
+  # Weekly system update
+  systemd.services.${flakeUpdateServiceName} = {
+    description = "Update nix flake inputs and switch to latest configuration";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = updateCommand;
+    };
+    path = with pkgs; [
+      git
+      nix
+      nh
+      nixos-rebuild
+    ];
+  };
+
+  systemd.timers.${flakeUpdateServiceName} = {
+    description = "Timer for weekly flake update";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "Sun 03:00:00";
+      Persistent = true;
+    };
   };
 
   system.stateVersion = "25.11";
