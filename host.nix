@@ -157,6 +157,10 @@ in
       extra-trusted-public-keys = [
         "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
       ];
+
+      # Netrc file for private Garnix cache access
+      netrc-file = config.sops.secrets.garnix-netrc.path;
+      narinfo-cache-positive-ttl = 3600;
     };
   };
 
@@ -170,6 +174,7 @@ in
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
       webhook-secret = { };
+      garnix-netrc = { };
     };
   };
 
