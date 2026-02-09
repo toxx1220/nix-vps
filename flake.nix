@@ -78,6 +78,7 @@
                     age
                     openssl
                     curl
+                    gnused
                   ];
                   text = builtins.readFile ./redeploy.sh;
                 };
