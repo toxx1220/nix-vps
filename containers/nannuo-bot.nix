@@ -1,14 +1,9 @@
 {
   config,
-  inputs,
   containerName,
   ...
 }:
 {
-  imports = [
-    inputs.nannuo-bot.nixosModules.default
-  ];
-
   config = {
     networking.hostName = containerName;
 

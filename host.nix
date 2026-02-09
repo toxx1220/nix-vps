@@ -68,6 +68,7 @@ let
       package ? null,
       proxyDomain ? "",
       proxyPort ? 0,
+      extraImports ? [ ],
     }:
     {
       autoStart = true;
@@ -82,7 +83,8 @@ let
             ./containers/common.nix
             module
             inputs.sops-nix.nixosModules.sops
-          ];
+          ]
+          ++ extraImports;
 
           networking.defaultGateway = {
             address = gatewayIp;
@@ -352,6 +354,7 @@ in
         name = containerNames.nannuoBot;
         address = containerRegistry.${containerNames.nannuoBot}.ip;
         module = ./containers/nannuo-bot.nix;
+        extraImports = [ inputs.nannuo-bot.nixosModules.default ];
       };
     })
     // (lib.optionalAttrs enableBgsBackend {
