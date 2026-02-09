@@ -11,8 +11,11 @@ echo "Decrypting webhook secret..."
 WEBHOOK_SECRET=$(age -d -i "$GARNIX_ACTION_PRIVATE_KEY_FILE" webhook-secret.age)
 
 echo "Calculating signature..."
-SIG=$(echo -n "" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
+PAYLOAD='{}'
+SIG=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
 
 echo "Triggering redeploy webhook..."
 curl -v -X POST https://deploy.toxx.dev/hooks/redeploy \
-  -H "X-Hub-Signature-256: sha256=$SIG"
+  -H "Content-Type: application/json" \
+  -H "X-Hub-Signature-256: sha256=$SIG" \
+  -d "$PAYLOAD"

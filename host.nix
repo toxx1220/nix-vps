@@ -180,7 +180,9 @@ in
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
-      webhook-secret = { };
+      webhook-secret = {
+        owner = "webhook";
+      };
       garnix-netrc = { };
     };
   };
