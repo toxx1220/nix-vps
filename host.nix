@@ -187,41 +187,46 @@ in
     };
   };
 
-  services.webhook = {
-    enable = true;
-    port = webhookPort;
-    hooks = {
-      redeploy = {
-        execute-command = "${
-          pkgs.writeShellApplication {
-            name = "redeploy";
-            runtimeInputs = with pkgs; [
-              git
-              nh
-              nixos-rebuild
-            ];
-            text = ''
-              sudo ${updateCommand}
-            '';
+  services.webhook =
+    let
+      redeployScript = pkgs.writeShellApplication {
+        name = "redeploy";
+        runtimeInputs = with pkgs; [
+          git
+          nh
+          nixos-rebuild
+        ];
+        text = ''
+          sudo ${updateCommand}
+        '';
+      };
+    in
+    {
+      enable = true;
+      port = webhookPort;
+      hooksTemplated = {
+        redeploy = ''
+          {
+            "id": "redeploy",
+            "execute-command": "${redeployScript}/bin/redeploy",
+            "command-working-directory": "/tmp",
+            "response-message": "Redeploy triggered",
+            "incoming-payload-content-type": "application/json",
+            "http-methods": ["POST"],
+            "trigger-rule": {
+              "match": {
+                "type": "payload-hmac-sha256",
+                "secret": "{{ cat "${config.sops.secrets.webhook-secret.path}" }}",
+                "parameter": {
+                  "source": "header",
+                  "name": "X-Hub-Signature-256"
+                }
+              }
+            }
           }
-        }/bin/redeploy";
-        command-working-directory = "/tmp";
-        response-message = "Redeploy triggered";
-        incoming-payload-content-type = "application/json";
-        http-methods = [ "POST" ];
-        trigger-rule = {
-          match = {
-            type = "payload-hmac-sha256";
-            secret-key-path = config.sops.secrets.webhook-secret.path;
-            parameter = {
-              source = "header";
-              name = "X-Hub-Signature-256";
-            };
-          };
-        };
+        '';
       };
     };
-  };
 
   security.sudo.extraRules = [
     {
