@@ -4,14 +4,8 @@ builds:
     - nixosConfigurations.*
     - packages.*
 
-deployments:
+actions:
   - name: vps-redeploy
-    on:
-      branch: main
-    script: |
-      WEBHOOK_SECRET=$(nix shell nixpkgs#age -c age -d -i "$GARNIX_ACTION_PRIVATE_KEY_FILE" webhook-secret.age)
-
-      SIG=$(echo -n "" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')
-
-      curl -X POST https://deploy.toxx.dev/hooks/redeploy \
-        -H "X-Hub-Signature-256: sha256=$SIG"
+    on: push
+    run: vps-redeploy
+    withRepoContents: true # This is required to access the private key file in the repository

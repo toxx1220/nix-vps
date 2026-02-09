@@ -67,6 +67,23 @@
               pkgs.sops
             ];
           };
+
+          apps.vps-redeploy = {
+            type = "app";
+            program =
+              let
+                script = pkgs.writeShellApplication {
+                  name = "vps-redeploy";
+                  runtimeInputs = with pkgs; [
+                    age
+                    openssl
+                    curl
+                  ];
+                  text = builtins.readFile ./redeploy.sh;
+                };
+              in
+              "${script}/bin/vps-redeploy";
+          };
         };
       flake = {
         nixosConfigurations.${flakeName} = inputs.nixpkgs.lib.nixosSystem {
