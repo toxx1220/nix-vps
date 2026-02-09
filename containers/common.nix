@@ -20,6 +20,6 @@
 
     # Shared SOPS key setup for containers
     # We bind mount the key from the host to this specific path
-    sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+    sops.age.sshKeyPaths = [ "/var/lib/sops-nix/key.txt" ];
   };
 }
