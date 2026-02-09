@@ -40,6 +40,9 @@
 
   outputs =
     inputs@{ flake-parts, ... }:
+    let
+      flakeName = "vps-arm";
+    in
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.treefmt-nix.flakeModule
@@ -66,11 +69,12 @@
           };
         };
       flake = {
-        nixosConfigurations.vps-arm = inputs.nixpkgs.lib.nixosSystem {
+        nixosConfigurations.${flakeName} = inputs.nixpkgs.lib.nixosSystem {
           system = "aarch64-linux";
           specialArgs = {
             inherit inputs;
             device = "/dev/sda";
+            inherit flakeName;
           };
           modules = [
             inputs.disko.nixosModules.disko
