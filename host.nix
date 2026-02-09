@@ -29,7 +29,7 @@ let
   };
 
   # --- SERVICE TOGGLES ---
-  enableNannuoBot = false;
+  enableNannuoBot = true;
   enableBgsBackend = false;
   enableTestContainer = true;
 
@@ -352,10 +352,6 @@ in
         name = containerNames.nannuoBot;
         address = containerRegistry.${containerNames.nannuoBot}.ip;
         module = ./containers/nannuo-bot.nix;
-        packageArg = "bot-package";
-        package = inputs.nannuo-bot.packages.${pkgs.system}.default;
-        proxyDomain = containerRegistry.${containerNames.nannuoBot}.proxyDomain;
-        proxyPort = containerRegistry.${containerNames.nannuoBot}.proxyPort;
       };
     })
     // (lib.optionalAttrs enableBgsBackend {

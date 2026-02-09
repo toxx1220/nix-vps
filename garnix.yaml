@@ -3,8 +3,6 @@ builds:
   include:
     - nixosConfigurations.*
     - packages.*
-    - devShells.*
-    - checks.*
 
 deployments:
   - name: vps-redeploy
