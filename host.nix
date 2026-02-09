@@ -3,6 +3,7 @@
   pkgs,
   lib,
   inputs,
+  flakeName,
   ...
 }:
 let
@@ -11,7 +12,7 @@ let
   hostName = "oracle-vps";
 
   repoUrl = "github:toxx1220/nix-vps";
-  updateCommand = "${pkgs.nh}/bin/nh os switch --update ${repoUrl} -- -L";
+  updateCommand = "${pkgs.nh}/bin/nh os switch --update ${repoUrl} --hostname ${flakeName} -- -L";
   flakeUpdateServiceName = "flake-update";
 
   # --- DOMAIN CONFIGURATION ---
@@ -411,7 +412,12 @@ in
 
         staticHosts = {
           ${domains.webhook} = {
-            extraConfig = "reverse_proxy localhost:${toString webhookPort}";
+            extraConfig = ''
+              log {
+                output file /var/log/caddy/webhook.log
+              }
+              reverse_proxy localhost:${toString webhookPort}
+            '';
           };
         };
       in
