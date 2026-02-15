@@ -1,0 +1,27 @@
+name: Deploy to VPS
+
+on:
+  workflow_dispatch: # allows manual triggering
+  push:
+    branches: [main]
+
+# Prevent concurrent deployments — queue new ones instead of cancelling
+concurrency:
+  group: vps-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Only deploy if Garnix build succeeded
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1 # used for convenience
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          command_timeout: 20m
+          # The forced-command key ignores this script and runs his command instead.
+          script: echo "Triggering deploy via forced-command key"

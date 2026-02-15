@@ -3,9 +3,3 @@ builds:
   include:
     - nixosConfigurations.*
     - packages.*
-
-actions:
-  - name: vps-redeploy
-    on: push
-    run: vps-redeploy
-    withRepoContents: true # This is required to access the private key file in the repository

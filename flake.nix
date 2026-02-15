@@ -33,9 +33,6 @@
     nannuo-bot = {
       url = "github:toxx1220/nannuo-bot";
     };
-    bgs-backend = {
-      url = "github:toxx1220/bgs_backend_V2?dir=deployment";
-    };
   };
 
   outputs =
@@ -66,24 +63,6 @@
               config.treefmt.build.wrapper
               pkgs.sops
             ];
-          };
-
-          apps.vps-redeploy = {
-            type = "app";
-            program =
-              let
-                script = pkgs.writeShellApplication {
-                  name = "vps-redeploy";
-                  runtimeInputs = with pkgs; [
-                    age
-                    openssl
-                    curl
-                    gnused
-                  ];
-                  text = builtins.readFile ./redeploy.sh;
-                };
-              in
-              "${script}/bin/vps-redeploy";
           };
         };
       flake = {

@@ -2,3 +2,4 @@
 .direnv/
 secrets-init/
 temp_dotfiles
+.DS_Store

@@ -3,21 +3,51 @@
   pkgs,
   lib,
   inputs,
-  flakeName,
   ...
 }:
 let
   user = "toxx";
   sshPort = 22;
   hostName = "oracle-vps";
+  flakeName = "vps-arm";
 
-  repoUrl = "github:toxx1220/nix-vps";
-  updateCommand = "${pkgs.nh}/bin/nh os switch --update ${repoUrl} --hostname ${flakeName} -- -L";
-  flakeUpdateServiceName = "flake-update";
+  # Local persistent clone of this repo — used by the deploy script
+  localRepoPath = "/persistent/nix-vps";
+
+  # Deploy script: pull latest main and rebuild
+  # This is the ONLY thing the CI deploy key can execute (via SSH forced command)
+  deploy-script = pkgs.writeShellApplication {
+    name = "vps-deploy";
+    runtimeInputs = with pkgs; [
+      git
+      nix
+      nixos-rebuild
+      coreutils
+    ];
+    text = ''
+      set -euo pipefail
+
+      LOG="/var/log/nix-deploy.log"
+      log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
+
+      log "=== Starting NixOS Deployment ==="
+      cd ${localRepoPath}
+
+      log "Fetching latest main..."
+      git fetch origin main
+
+      log "Resetting to origin/main..."
+      git reset --hard origin/main
+
+      log "Starting NixOS rebuild..."
+      nixos-rebuild switch --flake ".#${flakeName}" --accept-flake-config -L 2>&1 | tee -a "$LOG"
+
+      log "=== Deployment Complete ==="
+    '';
+  };
 
   # --- DOMAIN CONFIGURATION ---
   domains = {
-    webhook = "deploy.toxx.dev";
     bgsBackend = "bgsearch.toxx.dev";
     testContainer = "oracle.toxx.dev";
   };
@@ -33,8 +63,6 @@ let
   enableNannuoBot = true;
   enableBgsBackend = false;
   enableTestContainer = true;
-
-  webhookPort = 9000;
 
   # --- NETWORK CONFIGURATION ---
   networkBridgeName = "br0";
@@ -92,7 +120,6 @@ let
             interface = "eth0";
           };
 
-          # Pass inputs and other args to the container
           _module.args = {
             inherit inputs;
             containerName = name;
@@ -102,7 +129,6 @@ let
           // (lib.optionalAttrs (packageArg != null) { ${packageArg} = package; });
         };
 
-      # Host-side container configuration: Bind Mounts
       bindMounts = {
         "sops-key" = {
           hostPath = "/persistent/etc/ssh/ssh_host_ed25519_key";
@@ -133,14 +159,12 @@ in
     tree
     git
     uwufetch
-    nh
   ];
 
   programs.nh = {
     enable = true;
     clean.enable = true;
     clean.extraArgs = "--keep 3 --keep-since 3d";
-    flake = repoUrl;
   };
 
   nix = {
@@ -150,7 +174,6 @@ in
         "flakes"
       ];
 
-      # Store optimization - hard-links identical files to save disk space
       auto-optimise-store = true;
 
       # Garnix CI binary cache
@@ -180,65 +203,9 @@ in
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
-      webhook-secret = {
-        owner = "webhook";
-      };
       garnix-netrc = { };
     };
   };
-
-  services.webhook =
-    let
-      redeployScript = pkgs.writeShellApplication {
-        name = "redeploy";
-        runtimeInputs = with pkgs; [
-          git
-          nh
-          nixos-rebuild
-        ];
-        text = ''
-          sudo ${updateCommand}
-        '';
-      };
-    in
-    {
-      enable = true;
-      port = webhookPort;
-      hooksTemplated = {
-        redeploy = ''
-          {
-            "id": "redeploy",
-            "execute-command": "${redeployScript}/bin/redeploy",
-            "command-working-directory": "/tmp",
-            "response-message": "Redeploy triggered",
-            "incoming-payload-content-type": "application/json",
-            "http-methods": ["POST"],
-            "trigger-rule": {
-              "match": {
-                "type": "payload-hmac-sha256",
-                "secret": "{{ cat "${config.sops.secrets.webhook-secret.path}" }}",
-                "parameter": {
-                  "source": "header",
-                  "name": "X-Hub-Signature-256"
-                }
-              }
-            }
-          }
-        '';
-      };
-    };
-
-  security.sudo.extraRules = [
-    {
-      users = [ "webhook" ];
-      commands = [
-        {
-          command = "${pkgs.nh}/bin/nh";
-          options = [ "NOPASSWD" ];
-        }
-      ];
-    }
-  ];
 
   # Persistent storage - neededForBoot ensures mounts happen in initrd
   fileSystems."/persistent".neededForBoot = true;
@@ -278,7 +245,11 @@ in
       root = {
         hashedPasswordFile = config.sops.secrets.root-password.path;
         openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO" # TODO: replace?
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO"
+
+          # CI deploy key — can ONLY execute the deploy script
+          # https://man.openbsd.org/sshd#restrict
+          ''command="${deploy-script}/bin/vps-deploy",restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPJtzHWaOeBmkkKFtvS0i/WKBphdxFF0ZDOBKNNuLjxL ci-deploy''
         ];
       };
     };
@@ -414,45 +385,8 @@ in
               '';
           };
         };
-
-        containerHosts = lib.mapAttrs' mkCaddyEntry proxyEnabledContainers;
-
-        staticHosts = {
-          ${domains.webhook} = {
-            extraConfig = ''
-              log {
-                output file /var/log/caddy/webhook.log
-              }
-              reverse_proxy localhost:${toString webhookPort}
-            '';
-          };
-        };
       in
-      containerHosts // staticHosts;
-  };
-
-  # Weekly system update
-  systemd.services.${flakeUpdateServiceName} = {
-    description = "Update nix flake inputs and switch to latest configuration";
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = updateCommand;
-    };
-    path = with pkgs; [
-      git
-      nix
-      nh
-      nixos-rebuild
-    ];
-  };
-
-  systemd.timers.${flakeUpdateServiceName} = {
-    description = "Timer for weekly flake update";
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnCalendar = "Sun 03:00:00";
-      Persistent = true;
-    };
+      lib.mapAttrs' mkCaddyEntry proxyEnabledContainers;
   };
 
   system.stateVersion = "25.11";
