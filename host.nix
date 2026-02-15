@@ -23,6 +23,7 @@ let
       nix
       nixos-rebuild
       coreutils
+      cacert
     ];
     text = ''
       set -euo pipefail
@@ -31,6 +32,12 @@ let
       log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
 
       log "=== Starting NixOS Deployment ==="
+
+      if [ ! -d "${localRepoPath}" ]; then
+        log "Initializing repository at ${localRepoPath}..."
+        git clone https://github.com/toxx1220/nix-vps.git "${localRepoPath}"
+      fi
+
       cd ${localRepoPath}
 
       log "Fetching latest main..."
