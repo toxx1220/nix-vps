@@ -11,9 +11,12 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v6
-      
+        with:
+          # By supplying a PAT (Personal Access Token), Github will also execute subsequently defined actions.
+          token: ${{ secrets.GH_PAT }} \
+
       - uses: DeterminateSystems/determinate-nix-action@v3
-      
+
       - name: Update flake input
         run: nix flake lock --update-input nannuo-bot
 
