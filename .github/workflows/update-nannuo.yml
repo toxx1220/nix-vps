@@ -1,0 +1,31 @@
+name: Update Nannuo Bot Flake Input
+
+on:
+  repository_dispatch:
+    types: [update-nannuo-bot]
+
+jobs:
+  update-flake:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      
+      - uses: DeterminateSystems/determinate-nix-action@v3
+      
+      - name: Update flake input
+        run: nix flake lock --update-input nannuo-bot
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add flake.lock
+          # Only commit if there are changes
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: update nannuo-bot flake input"
+            git push
+          else
+            echo "No changes to commit"
+          fi
