@@ -18,7 +18,7 @@ jobs:
       - name: Wait for Garnix check
         uses: lewagon/wait-on-check-action@v1.5.0
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           check-regexp: "(nixosConfig|Evaluate|All Garnix).*" # needs to match all garnix job names..
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 10 # seconds
