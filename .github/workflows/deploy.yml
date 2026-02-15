@@ -15,6 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     # Only deploy if Garnix build succeeded
     steps:
+      - name: Wait for Garnix check
+        uses: lewagon/wait-on-check-action@v1.5.0
+        with:
+          ref: ${{ github.ref }}
+          check-regexp: "garnix:.*"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10 # seconds
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1 # used for convenience
         with:
