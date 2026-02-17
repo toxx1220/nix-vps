@@ -18,6 +18,7 @@ jobs:
       - uses: DeterminateSystems/determinate-nix-action@v3
       - uses: DeterminateSystems/update-flake-lock@main
         with:
+          token: ${{ secrets.GH_PAT }}
           pr-title: "chore: update flake inputs"
           pr-labels: |
             dependencies
