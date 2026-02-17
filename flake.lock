@@ -208,11 +208,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1771168583,
-        "narHash": "sha256-CwXb0ParO4ENLSPqG3KQe0FOMjQ103Tp4tHyzpl/kio=",
+        "lastModified": 1771282377,
+        "narHash": "sha256-R1fW/XxWr+RGAh4H/UTR7VQviUuB3KgIazP1TsATttY=",
         "owner": "toxx1220",
         "repo": "nannuo-bot",
-        "rev": "ee9597b6a06d5fdb547b565065a66e1d45539d40",
+        "rev": "336765c024bf47826ec5e6d7c62fa5aed28340da",
         "type": "github"
       },
       "original": {
