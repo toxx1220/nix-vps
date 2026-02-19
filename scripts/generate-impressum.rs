@@ -18,13 +18,13 @@ fn read_and_validate(path: &str) -> String {
 
 fn main() -> std::io::Result<()> {
     // Template Placeholders
-    const P_EMAIL_USER_REV: str = "__EMAIL_USER_REV__";
-    const P_EMAIL_DOMAIN_REV: str = "__EMAIL_DOMAIN_REV__";
-    const P_EMAIL_NOSCRIPT: str = "__EMAIL_NOSCRIPT__";
-    const P_PHONE_REV: str = "__PHONE_REV__";
-    const P_PHONE_NOSCRIPT: str = "__PHONE_NOSCRIPT__";
-    const P_NAME_REV: str = "__NAME_REV__";
-    const P_NAME_NOSCRIPT: str = "__NAME_NOSCRIPT__";
+    const P_EMAIL_USER_REV: &str = "__EMAIL_USER_REV__";
+    const P_EMAIL_DOMAIN_REV: &str = "__EMAIL_DOMAIN_REV__";
+    const P_EMAIL_NOSCRIPT: &str = "__EMAIL_NOSCRIPT__";
+    const P_PHONE_REV: &str = "__PHONE_REV__";
+    const P_PHONE_NOSCRIPT: &str = "__PHONE_NOSCRIPT__";
+    const P_NAME_REV: &str = "__NAME_REV__";
+    const P_NAME_NOSCRIPT: &str = "__NAME_NOSCRIPT__";
 
     let email_path = read_required_env("IMPRESSUM_EMAIL_FILE");
     let phone_path = read_required_env("IMPRESSUM_PHONE_FILE");
