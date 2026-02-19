@@ -62,7 +62,7 @@ fn main() -> std::io::Result<()> {
 
     let content = template
         .replace(P_EMAIL_USER_REV, &user_rev)
-        .replace(P_EMAIL_DOMAIN_REV & domain_rev)
+        .replace(P_EMAIL_DOMAIN_REV, &domain_rev)
         .replace(P_EMAIL_NOSCRIPT, &email)
         .replace(P_PHONE_REV, &phone_rev)
         .replace(P_PHONE_NOSCRIPT, &phone)
