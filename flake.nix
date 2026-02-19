@@ -62,7 +62,13 @@
             packages = [
               config.treefmt.build.wrapper
               pkgs.sops
+              pkgs.nil
+              pkgs.rustc
+              pkgs.rustfmt
+              pkgs.rust-analyzer
             ];
+            # Set RUST_SRC_PATH for rust-analyzer
+            env.RUST_SRC_PATH = "${pkgs.rustPlatform.rustLibSrc}";
           };
         };
       flake = {

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Impressum</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        line-height: 1.5;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        color: #333;
+      }
+      h1 {
+        margin-bottom: 2rem;
+      }
+      p {
+        margin-bottom: 1rem;
+      }
+      strong {
+        color: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <section>
+      <h1>Impressum</h1>
+      <p>
+        <strong>Angaben gemäß § 5 DDG</strong><br />
+        <strong
+          ><span id="contact-name" data-n="__NAME_REV__"
+            ><noscript>__NAME_NOSCRIPT__</noscript></span
+          ></strong
+        ><br />
+        c/o <strong>Impressumservice Dein-Impressum</strong><br />
+        Stettiner Str. 41<br />
+        35410 Hungen
+      </p>
+
+      <p>
+        <strong>Bitte versenden Sie keine Pakete an diese Adresse.</strong>
+      </p>
+
+      <!--<p><strong>Vertreten durch:</strong> <span id="secure-name-2" data-n="__NAME_REV__"><noscript>__NAME_NOSCRIPT__</noscript></span></p>-->
+
+      <p>
+        <strong>Kontakt:</strong><br />
+        <span
+          id="contact-mail"
+          data-u="__EMAIL_USER_REV__"
+          data-d="__EMAIL_DOMAIN_REV__"
+        >
+          <noscript>E-Mail: __EMAIL_NOSCRIPT__</noscript> </span
+        ><br />
+        <span id="contact-phone" data-p="__PHONE_REV__">
+          <noscript>Telefon: __PHONE_NOSCRIPT__</noscript>
+        </span>
+      </p>
+
+      <script>
+        document.addEventListener("DOMContentLoaded", function () {
+          // Helper to reverse string
+          function reverse(s) {
+            return s.split("").reverse().join("");
+          }
+
+          // Email Injection
+          const mailContainer = document.getElementById("contact-mail");
+          if (mailContainer) {
+            const user = reverse(mailContainer.getAttribute("data-u"));
+            const domain = reverse(mailContainer.getAttribute("data-d"));
+            const email = user + "@" + domain;
+
+            const link = document.createElement("a");
+            link.href = "mailto:" + email;
+            link.textContent = "E-Mail: " + email;
+            link.setAttribute("aria-label", "E-Mail an " + email);
+            link.style.color = "inherit";
+            link.style.textDecoration = "none"; // Match surrounding text style if desired, or "underline"
+
+            // Replace content
+            mailContainer.innerHTML = "";
+            mailContainer.appendChild(link);
+          }
+
+          // Phone Injection
+          const phoneContainer = document.getElementById("contact-phone");
+          if (phoneContainer) {
+            const phone = reverse(phoneContainer.getAttribute("data-p"));
+
+            const link = document.createElement("a");
+            link.href = "tel:" + phone;
+            link.textContent = "Telefon: " + phone;
+            link.setAttribute(
+              "aria-label",
+              "Telefonnummer " + phone + " anrufen",
+            );
+            link.style.color = "inherit";
+            link.style.textDecoration = "none";
+
+            phoneContainer.innerHTML = "";
+            phoneContainer.appendChild(link);
+          }
+
+          // Name Injection
+          const nameContainer = document.getElementById("contact-name");
+          if (nameContainer) {
+            const name = reverse(nameContainer.getAttribute("data-n"));
+            nameContainer.innerHTML = "";
+            nameContainer.appendChild(document.createTextNode(name));
+          }
+        });
+      </script>
+
+      <!--<p><strong>USt.-IdNr.:</strong> falls vorhanden</p>-->
+
+      <p>
+        <strong
+          >Regulierungs- und Aufsichtsbehörde (Landesmedienanstalt):</strong
+        >
+        falls Sie von Ihrem Social-Media Accounts auf das Impressum Ihrer
+        Website verweisen.
+      </p>
+
+      <p>
+        <strong
+          >Verbraucherstreitbeilegung / Universalschlichtungsstelle:</strong
+        ><br />
+        Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren
+        vor einer Verbraucherschlichtungsstelle teilzunehmen.
+      </p>
+
+      <p>
+        <strong>Haftung für Inhalte:</strong><br />
+        Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf
+        diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8
+        bis 10 DDG sind wir als Diensteanbieter jedoch nicht verpflichtet,
+        übermittelte oder gespeicherte fremde Informationen zu überwachen oder
+        nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit
+        hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von
+        Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt.
+        Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der
+        Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von
+        entsprechenden Rechtsverletzungen werden wir diese Inhalte umgehend
+        entfernen.
+      </p>
+
+      <p>
+        <strong>Urheberrecht</strong><br />
+        Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen
+        Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung,
+        Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der
+        Grenzen des Urheberrechts bedürfen der schriftlichen Zustimmung des
+        jeweiligen Autors bzw. Erstellers. Downloads und Kopien dieser Seite
+        sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.
+        Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden,
+        werden die Urheberrechte Dritter beachtet. Insbesondere werden Inhalte
+        Dritter als solche gekennzeichnet. Sollten Sie trotzdem auf eine
+        Urheberrechtsverletzung aufmerksam werden, bitten wir um einen
+        entsprechenden Hinweis. Bei Bekanntwerden von Rechtsverletzungen werden
+        wir derartige Inhalte umgehend entfernen.
+      </p>
+    </section>
+  </body>
+</html>
