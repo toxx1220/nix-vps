@@ -17,6 +17,15 @@ fn read_and_validate(path: &str) -> String {
 }
 
 fn main() -> std::io::Result<()> {
+    // Template Placeholders
+    const P_EMAIL_USER_REV = "__EMAIL_USER_REV__";
+    const P_EMAIL_DOMAIN_REV = "__EMAIL_DOMAIN_REV__";
+    const P_EMAIL_NOSCRIPT = "__EMAIL_NOSCRIPT__";
+    const P_PHONE_REV = "__PHONE_REV__";
+    const P_PHONE_NOSCRIPT = "__PHONE_NOSCRIPT__";
+    const P_NAME_REV = "__NAME_REV__";
+    const P_NAME_NOSCRIPT = "__NAME_NOSCRIPT__";
+
     let email_path = read_required_env("IMPRESSUM_EMAIL_FILE");
     let phone_path = read_required_env("IMPRESSUM_PHONE_FILE");
     let name_path = read_required_env("IMPRESSUM_NAME_FILE");
@@ -38,13 +47,13 @@ fn main() -> std::io::Result<()> {
 
     // Validate template placeholders
     for placeholder in [
-        "__EMAIL_USER_REV__",
-        "__EMAIL_DOMAIN_REV__",
-        "__EMAIL_NOSCRIPT__",
-        "__PHONE_REV__",
-        "__PHONE_NOSCRIPT__",
-        "__NAME_REV__",
-        "__NAME_NOSCRIPT__",
+        P_EMAIL_USER_REV,
+        P_EMAIL_DOMAIN_REV,
+        P_EMAIL_NOSCRIPT,
+        P_PHONE_REV,
+        P_PHONE_NOSCRIPT,
+        P_NAME_REV,
+        P_NAME_NOSCRIPT
     ] {
         if !template.contains(placeholder) {
             eprintln!("Warning: Template missing placeholder {}", placeholder);
@@ -52,13 +61,13 @@ fn main() -> std::io::Result<()> {
     }
 
     let content = template
-        .replace("__EMAIL_USER_REV__", &user_rev)
-        .replace("__EMAIL_DOMAIN_REV__", &domain_rev)
-        .replace("__EMAIL_NOSCRIPT__", &email)
-        .replace("__PHONE_REV__", &phone_rev)
-        .replace("__PHONE_NOSCRIPT__", &phone)
-        .replace("__NAME_REV__", &name_rev)
-        .replace("__NAME_NOSCRIPT__", &name);
+        .replace(P_EMAIL_USER_REV, &user_rev)
+        .replace(P_EMAIL_DOMAIN_REV &domain_rev)
+        .replace(P_EMAIL_NOSCRIPT, &email)
+        .replace(P_PHONE_REV, &phone_rev)
+        .replace(P_PHONE_NOSCRIPT, &phone)
+        .replace(P_NAME_REV, &name_rev)
+        .replace(P_NAME_NOSCRIPT, &name);
 
     fs::write(&output_path, content)?;
 
