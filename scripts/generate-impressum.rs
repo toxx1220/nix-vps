@@ -18,13 +18,13 @@ fn read_and_validate(path: &str) -> String {
 
 fn main() -> std::io::Result<()> {
     // Template Placeholders
-    const P_EMAIL_USER_REV = "__EMAIL_USER_REV__";
-    const P_EMAIL_DOMAIN_REV = "__EMAIL_DOMAIN_REV__";
-    const P_EMAIL_NOSCRIPT = "__EMAIL_NOSCRIPT__";
-    const P_PHONE_REV = "__PHONE_REV__";
-    const P_PHONE_NOSCRIPT = "__PHONE_NOSCRIPT__";
-    const P_NAME_REV = "__NAME_REV__";
-    const P_NAME_NOSCRIPT = "__NAME_NOSCRIPT__";
+    const P_EMAIL_USER_REV: str = "__EMAIL_USER_REV__";
+    const P_EMAIL_DOMAIN_REV: str = "__EMAIL_DOMAIN_REV__";
+    const P_EMAIL_NOSCRIPT: str = "__EMAIL_NOSCRIPT__";
+    const P_PHONE_REV: str = "__PHONE_REV__";
+    const P_PHONE_NOSCRIPT: str = "__PHONE_NOSCRIPT__";
+    const P_NAME_REV: str = "__NAME_REV__";
+    const P_NAME_NOSCRIPT: str = "__NAME_NOSCRIPT__";
 
     let email_path = read_required_env("IMPRESSUM_EMAIL_FILE");
     let phone_path = read_required_env("IMPRESSUM_PHONE_FILE");
@@ -53,7 +53,7 @@ fn main() -> std::io::Result<()> {
         P_PHONE_REV,
         P_PHONE_NOSCRIPT,
         P_NAME_REV,
-        P_NAME_NOSCRIPT
+        P_NAME_NOSCRIPT,
     ] {
         if !template.contains(placeholder) {
             eprintln!("Warning: Template missing placeholder {}", placeholder);
@@ -62,7 +62,7 @@ fn main() -> std::io::Result<()> {
 
     let content = template
         .replace(P_EMAIL_USER_REV, &user_rev)
-        .replace(P_EMAIL_DOMAIN_REV &domain_rev)
+        .replace(P_EMAIL_DOMAIN_REV & domain_rev)
         .replace(P_EMAIL_NOSCRIPT, &email)
         .replace(P_PHONE_REV, &phone_rev)
         .replace(P_PHONE_NOSCRIPT, &phone)
