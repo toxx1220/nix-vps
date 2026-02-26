@@ -17,7 +17,6 @@ fn read_and_validate(path: &str) -> String {
 }
 
 fn main() -> std::io::Result<()> {
-    // Template Placeholders
     const P_EMAIL_USER_REV: &str = "__EMAIL_USER_REV__";
     const P_EMAIL_DOMAIN_REV: &str = "__EMAIL_DOMAIN_REV__";
     const P_EMAIL_NOSCRIPT: &str = "__EMAIL_NOSCRIPT__";
@@ -26,12 +25,11 @@ fn main() -> std::io::Result<()> {
     const P_NAME_REV: &str = "__NAME_REV__";
     const P_NAME_NOSCRIPT: &str = "__NAME_NOSCRIPT__";
 
-    let email_path = read_required_env("IMPRESSUM_EMAIL_FILE");
-    let phone_path = read_required_env("IMPRESSUM_PHONE_FILE");
-    let name_path = read_required_env("IMPRESSUM_NAME_FILE");
-    let template_path = read_required_env("IMPRESSUM_TEMPLATE_FILE");
-    let output_path = env::var("IMPRESSUM_OUTPUT_FILE")
-        .unwrap_or_else(|_| "/run/impressum/impressum.html".to_string());
+    let email_path = read_required_env("EMAIL_FILE");
+    let phone_path = read_required_env("PHONE_FILE");
+    let name_path = read_required_env("NAME_FILE");
+    let template_path = read_required_env("TEMPLATE_FILE");
+    let output_path = read_required_env("OUTPUT_FILE");
 
     let email = read_and_validate(&email_path);
     let phone = read_and_validate(&phone_path);
@@ -45,7 +43,6 @@ fn main() -> std::io::Result<()> {
 
     let template = fs::read_to_string(&template_path)?;
 
-    // Validate template placeholders
     for placeholder in [
         P_EMAIL_USER_REV,
         P_EMAIL_DOMAIN_REV,
@@ -72,8 +69,6 @@ fn main() -> std::io::Result<()> {
     fs::write(&output_path, content)?;
 
     let mut perms = fs::metadata(&output_path)?.permissions();
-    // Ensure the file is world-readable so Caddy (running as 'caddy' user)
-    // can serve it, regardless of the root user's umask.
     perms.set_mode(0o644);
     fs::set_permissions(&output_path, perms)?;
 

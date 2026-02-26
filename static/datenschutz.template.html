@@ -49,11 +49,82 @@
 </ul>
 <h2 id="m3">Verantwortlicher</h2>
 <p>
-    Noah Behm<br />c/o Impressumservice Dein-Impressum<br />Stettiner Str. 41<br />35410
-    Hungen, Deutschland
+    <strong
+        ><span id="contact-name" data-n="__NAME_REV__"
+            ><noscript>__NAME_NOSCRIPT__</noscript></span
+        ></strong
+    ><br />
+    c/o <strong>Impressumservice Dein-Impressum</strong><br />
+    Stettiner Str. 41<br />
+    35410 Hungen
 </p>
-<p>E-Mail-Adresse: <a href="mailto:contact@toxx.dev">contact@toxx.dev</a></p>
-<p>Telefon: 015679 783178</p>
+<p>
+    <strong>Bitte versenden Sie keine Pakete an diese Adresse.</strong>
+</p>
+
+<p>
+    <strong>Kontakt:</strong><br />
+    <span
+        id="contact-mail"
+        data-u="__EMAIL_USER_REV__"
+        data-d="__EMAIL_DOMAIN_REV__"
+    >
+        <noscript>E-Mail: __EMAIL_NOSCRIPT__</noscript> </span
+    ><br />
+    <span id="contact-phone" data-p="__PHONE_REV__">
+        <noscript>Telefon: __PHONE_NOSCRIPT__</noscript>
+    </span>
+</p>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        function reverse(s) {
+            return s.split("").reverse().join("");
+        }
+
+        const mailContainer = document.getElementById("contact-mail");
+        if (mailContainer) {
+            const user = reverse(mailContainer.getAttribute("data-u"));
+            const domain = reverse(mailContainer.getAttribute("data-d"));
+            const email = user + "@" + domain;
+
+            const link = document.createElement("a");
+            link.href = "mailto:" + email;
+            link.textContent = "E-Mail: " + email;
+            link.setAttribute("aria-label", "E-Mail an " + email);
+            link.style.color = "inherit";
+            link.style.textDecoration = "none";
+
+            mailContainer.innerHTML = "";
+            mailContainer.appendChild(link);
+        }
+
+        const phoneContainer = document.getElementById("contact-phone");
+        if (phoneContainer) {
+            const phone = reverse(phoneContainer.getAttribute("data-p"));
+
+            const link = document.createElement("a");
+            link.href = "tel:" + phone;
+            link.textContent = "Telefon: " + phone;
+            link.setAttribute(
+                "aria-label",
+                "Telefonnummer " + phone + " anrufen",
+            );
+            link.style.color = "inherit";
+            link.style.textDecoration = "none";
+
+            phoneContainer.innerHTML = "";
+            phoneContainer.appendChild(link);
+        }
+
+        const nameContainer = document.getElementById("contact-name");
+        if (nameContainer) {
+            const name = reverse(nameContainer.getAttribute("data-n"));
+            nameContainer.innerHTML = "";
+            nameContainer.appendChild(document.createTextNode(name));
+        }
+    });
+</script>
 <p>
     Impressum:
     <a href="https://toxx.dev/impressum" target="_blank"
