@@ -390,7 +390,8 @@ in
               ''
                 log {
                   output file /var/log/caddy/${name}.log {
-                    roll_keep_days 31d
+                    roll_keep_for 744h
+                    roll_at 00:00
                   }
                 }
                 reverse_proxy ${containerIp}:${containerPort}
