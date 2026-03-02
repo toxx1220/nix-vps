@@ -389,8 +389,9 @@ in
               in
               ''
                 log {
-                  output file /var/log/caddy/${name}.log
-                  roll_keep_days 31
+                  output file /var/log/caddy/${name}.log {
+                    roll_keep_days 31d
+                  }
                 }
                 reverse_proxy ${containerIp}:${containerPort}
               '';
