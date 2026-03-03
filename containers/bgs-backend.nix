@@ -1,6 +1,5 @@
 {
   pkgs,
-  backend-package,
   config,
   inputs,
   containerName,
@@ -9,7 +8,6 @@
   ...
 }:
 
-# TODO: ONLY A DRAFT
 {
   config = {
     networking.hostName = containerName;
@@ -21,7 +19,7 @@
     };
 
     sops = {
-      defaultSopsFile = "${inputs.bgs-backend}/secrets.yaml";
+      defaultSopsFile = ../secrets.yaml;
       age.keyFile = "/var/lib/sops-nix/key.txt";
       secrets.bgs_env = { };
     };
@@ -48,32 +46,20 @@
       location = "/var/lib/postgresql/backups";
     };
 
-    systemd.services.bgs-backend = {
-      description = "BGS Kotlin Backend";
-      after = [
-        "postgresql.service"
-        "network.target"
-      ];
-      wantedBy = [ "multi-user.target" ];
-      serviceConfig = {
-        ExecStart = "${backend-package}/bin/bgs-backend";
-        User = "bgs-app";
-        Restart = "always";
-        EnvironmentFile = config.sops.secrets.bgs_env.path;
-        Environment = [
-          "SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/bgs_db"
-          "SPRING_DATASOURCE_USERNAME=bgs_user"
-          "PG_HOST=localhost"
-          "PG_PORT=5432"
-          "PG_DATABASE=bgs_db"
-        ];
-      };
+    services.bgs-backend = {
+      enable = true;
+      envFile = config.sops.secrets.bgs_env.path;
     };
 
-    users.users.bgs-app = {
-      isSystemUser = true;
-      group = "bgs-app";
+    systemd.services.bgs-backend = {
+      environment = {
+        SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5432/bgs_db";
+        SPRING_DATASOURCE_USERNAME = "bgs_user";
+        PG_HOST = "localhost";
+        PG_PORT = "5432";
+        PG_DATABASE = "bgs_db";
+        DATA_DIR = "/var/lib/bgs-backend";
+      };
     };
-    users.groups.bgs-app = { };
   };
 }
