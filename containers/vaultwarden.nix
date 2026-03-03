@@ -37,7 +37,7 @@
         DOMAIN = "https://${containerDomain}";
         SIGNUPS_ALLOWED = false;
         INVITATIONS_ALLOWED = false;
-        ROCKET_ADDRESS = "127.0.0.1";
+        ROCKET_ADDRESS = "0.0.0.0";
         ROCKET_PORT = containerPort;
       };
     };
