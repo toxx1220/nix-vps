@@ -9,6 +9,7 @@
 
     sops = {
       defaultSopsFile = ../secrets.yaml;
+      useSystemdActivation = true;
       secrets.discord_token = {
         owner = "nannuo";
       };

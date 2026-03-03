@@ -19,6 +19,7 @@
     sops = {
       defaultSopsFile = ../secrets.yaml;
       age.keyFile = "/var/lib/sops-nix/key.txt";
+      useSystemdActivation = true;
       secrets.vault-admin-token = { };
       templates."vaultwarden.env" = {
         owner = "vaultwarden";
@@ -40,6 +41,11 @@
         ROCKET_ADDRESS = "127.0.0.1";
         ROCKET_PORT = containerPort;
       };
+    };
+
+    systemd.services.vaultwarden = {
+      after = [ "sops-install-secrets.service" ];
+      requires = [ "sops-install-secrets.service" ];
     };
 
   };
