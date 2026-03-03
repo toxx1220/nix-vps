@@ -18,7 +18,6 @@
 
     sops = {
       defaultSopsFile = ../secrets.yaml;
-      age.keyFile = "/var/lib/sops-nix/key.txt";
       useSystemdActivation = true;
       secrets.vault-admin-token = { };
       templates."vaultwarden.env" = {
