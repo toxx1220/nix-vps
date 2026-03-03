@@ -57,6 +57,7 @@ let
   domains = {
     bgsBackend = "bgsearch.toxx.dev";
     testContainer = "oracle.toxx.dev";
+    vaultwarden = "vault.toxx.dev";
   };
 
   # --- CONTAINER NAMES ---
@@ -64,12 +65,14 @@ let
     nannuoBot = "nannuo-bot";
     bgsBackend = "bgs-backend";
     testContainer = "test-container";
+    vaultwarden = "vaultwarden";
   };
 
   # --- SERVICE TOGGLES ---
   enableNannuoBot = true;
   enableBgsBackend = false;
   enableTestContainer = true;
+  enableVaultwarden = true;
 
   # --- NETWORK CONFIGURATION ---
   networkBridgeName = "br0";
@@ -91,6 +94,11 @@ let
       ip = "10.0.0.10";
       proxyDomain = domains.testContainer;
       proxyPort = 8080;
+    };
+    ${containerNames.vaultwarden} = {
+      ip = "10.0.0.13";
+      proxyDomain = domains.vaultwarden;
+      proxyPort = 8222;
     };
   };
 
@@ -364,6 +372,15 @@ in
         module = ./containers/test-container.nix;
         proxyDomain = containerRegistry.${containerNames.testContainer}.proxyDomain;
         proxyPort = containerRegistry.${containerNames.testContainer}.proxyPort;
+      };
+    })
+    // (lib.optionalAttrs enableVaultwarden {
+      ${containerNames.vaultwarden} = mkContainer {
+        name = containerNames.vaultwarden;
+        address = containerRegistry.${containerNames.vaultwarden}.ip;
+        module = ./containers/vaultwarden.nix;
+        proxyDomain = containerRegistry.${containerNames.vaultwarden}.proxyDomain;
+        proxyPort = containerRegistry.${containerNames.vaultwarden}.proxyPort;
       };
     });
 

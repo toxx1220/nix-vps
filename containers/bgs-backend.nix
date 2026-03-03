@@ -1,7 +1,6 @@
 {
   pkgs,
   config,
-  inputs,
   containerName,
   containerDomain,
   containerPort,
