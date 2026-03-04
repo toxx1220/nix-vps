@@ -19,7 +19,13 @@
 
     sops = {
       defaultSopsFile = ../secrets.yaml;
+      useSystemdActivation = true;
       secrets.bgs_env = { };
+    };
+
+    services.bgs-backend = {
+      enable = true;
+      envFile = config.sops.secrets.bgs_env.path;
     };
 
     services.postgresql = {
@@ -28,7 +34,7 @@
       ensureDatabases = [ "bgs_db" ];
       ensureUsers = [
         {
-          name = "bgs_user";
+          name = "bgs_db";
           ensureDBOwnership = true;
         }
       ];
@@ -44,19 +50,20 @@
       location = "/var/lib/postgresql/backups";
     };
 
-    services.bgs-backend = {
-      enable = true;
-      envFile = config.sops.secrets.bgs_env.path;
-    };
-
     systemd.services.bgs-backend = {
+      after = [ "sops-install-secrets.service" ];
+      requires = [ "sops-install-secrets.service" ];
+      serviceConfig = {
+        StateDirectory = "bgs-backend/data";
+      };
       environment = {
         SPRING_DATASOURCE_URL = "jdbc:postgresql://localhost:5432/bgs_db";
-        SPRING_DATASOURCE_USERNAME = "bgs_user";
+        SPRING_DATASOURCE_USERNAME = "bgs_db";
+        SPRING_DATASOURCE_PASSWORD = "";
         PG_HOST = "localhost";
         PG_PORT = "5432";
         PG_DATABASE = "bgs_db";
-        DATA_DIR = "/var/lib/bgs-backend";
+        DATA_DIR = "/var/lib/bgs-backend/data";
       };
     };
   };

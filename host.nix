@@ -70,7 +70,7 @@ let
 
   # --- SERVICE TOGGLES ---
   enableNannuoBot = true;
-  enableBgsBackend = false;
+  enableBgsBackend = true;
   enableTestContainer = true;
   enableVaultwarden = true;
 
@@ -222,6 +222,7 @@ in
       impressum-email = { };
       impressum-phone = { };
       impressum-name = { };
+      proton_privkey = { };
     };
   };
 
@@ -235,7 +236,8 @@ in
       "/var/log" # System logs
       "/var/lib/nixos" # UID/GID maps (prevents permission issues)
       "/var/lib/systemd/coredump"
-      "/var/lib/containers" # Persist all container root filesystems
+      "/var/lib/containers" # Podman/Docker containers
+      "/var/lib/nixos-containers" # Persist all native NixOS container root filesystems
       "/var/lib/caddy" # SSL certificates
       "/var/lib/fail2ban" # Ban history
       {
@@ -342,6 +344,31 @@ in
       internalInterfaces = [ networkBridgeName ];
       externalInterface = "enp0s6";
     };
+
+    # WireGuard Split-Tunnel for framagit.org
+    wireguard.interfaces = {
+      wg0-proton = {
+        ips = [ "10.2.0.2/32" ];
+        privateKeyFile = config.sops.secrets.proton_privkey.path;
+        peers = [
+          {
+            publicKey = "E+bqV5VyoZ35D3IMdlqdTovZ+YOI0PbGFBZ+3DsRTiE=";
+            endpoint = "194.126.177.8:51820";
+            # Only route the IP for framagit.org through the VPN
+            allowedIPs = [
+              "176.9.183.75/32"
+              "2a01:4f8:150:71bd::75/128"
+            ];
+            persistentKeepalive = 25;
+          }
+        ];
+      };
+    };
+
+    # Ensure the containers on the bridge can masquerade out of wg0-proton
+    firewall.extraCommands = ''
+      iptables -t nat -A POSTROUTING -s ${gatewayIp}/24 -o wg0-proton -j MASQUERADE
+    '';
   };
 
   # Native NixOS Containers
@@ -359,10 +386,9 @@ in
         name = containerNames.bgsBackend;
         address = containerRegistry.${containerNames.bgsBackend}.ip;
         module = ./containers/bgs-backend.nix;
-        packageArg = "backend-package";
-        package = inputs.bgs-backend.packages.${pkgs.system}.default;
         proxyDomain = containerRegistry.${containerNames.bgsBackend}.proxyDomain;
         proxyPort = containerRegistry.${containerNames.bgsBackend}.proxyPort;
+        extraImports = [ inputs.bgs-backend.nixosModules.default ];
       };
     })
     // (lib.optionalAttrs enableTestContainer {

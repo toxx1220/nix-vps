@@ -33,6 +33,9 @@
     nannuo-bot = {
       url = "github:toxx1220/nannuo-bot";
     };
+    bgs-backend = {
+      url = "github:toxx1220/bgs_backend_V2";
+    };
   };
 
   outputs =
