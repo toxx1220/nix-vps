@@ -12,6 +12,13 @@
 
     services.host-proxy = {
       enable = true;
+      enableAuth = true;
+      skipAuthRoutes = [
+        "/api/*"
+        "/identity/*"
+        "/notifications/hub*"
+        "/vw_sync"
+      ];
       domain = containerDomain;
       port = containerPort;
     };

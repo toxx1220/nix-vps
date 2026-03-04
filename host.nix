@@ -78,6 +78,9 @@ let
   networkBridgeName = "br0";
   gatewayIp = "10.0.0.1";
 
+  # --- OAUTH2 PROXY ---
+  oauth2ProxyAddress = "127.0.0.1:4180";
+
   # --- CONTAINER REGISTRY ---
   containerRegistry = {
     ${containerNames.nannuoBot} = {
@@ -223,6 +226,7 @@ in
       impressum-phone = { };
       impressum-name = { };
       proton_privkey = { };
+      oauth2-proxy-env = { };
     };
   };
 
@@ -410,6 +414,27 @@ in
       };
     });
 
+  # --- OAUTH2 PROXY ---
+  services.oauth2-proxy = {
+    enable = true;
+    keyFile = config.sops.secrets.oauth2-proxy-env.path;
+    provider = "github";
+    httpAddress = "http://${oauth2ProxyAddress}";
+    reverseProxy = true;
+    extraConfig = {
+      whitelist-domain = ".toxx.dev";
+      cookie-domain = ".toxx.dev";
+      github-user = "toxx1220";
+      email-domain = "*";
+      footer = "<a href=\\\"https://toxx.dev/impressum\\\" style=\\\"color:inherit;\\\">Impressum</a> | <a href=\\\"https://toxx.dev/datenschutz\\\" style=\\\"color:inherit;\\\">Datenschutz</a>";
+    };
+  };
+
+  systemd.services.oauth2-proxy = {
+    after = [ "run-keys.mount" ];
+    requires = [ "run-keys.mount" ];
+  };
+
   # Dynamic Caddy Configuration for Containers
   services.caddy = {
     enable = true;
@@ -429,6 +454,8 @@ in
               let
                 containerIp = lib.head (lib.splitString "/" container.localAddress);
                 containerPort = toString container.config.services.host-proxy.port;
+                enableAuth = container.config.services.host-proxy.enableAuth or false;
+                skipAuthRoutes = container.config.services.host-proxy.skipAuthRoutes or [ ];
               in
               ''
                 log {
@@ -437,8 +464,37 @@ in
                     roll_at 00:00
                   }
                 }
-                reverse_proxy ${containerIp}:${containerPort}
-              '';
+              ''
+              + (
+                if enableAuth then
+                  ''
+                    handle /oauth2/* {
+                      reverse_proxy ${oauth2ProxyAddress}
+                    }
+                  ''
+                  + lib.concatMapStrings (route: ''
+                    handle ${route} {
+                      reverse_proxy ${containerIp}:${containerPort}
+                    }
+                  '') skipAuthRoutes
+                  + ''
+                    handle {
+                      forward_auth ${oauth2ProxyAddress} {
+                        uri /oauth2/auth
+                        copy_headers X-Auth-Request-User X-Auth-Request-Email
+                        @error status 401
+                        handle_response @error {
+                          redir * /oauth2/sign_in?rd={http.request.uri} 302
+                        }
+                      }
+                      reverse_proxy ${containerIp}:${containerPort}
+                    }
+                  ''
+                else
+                  ''
+                    reverse_proxy ${containerIp}:${containerPort}
+                  ''
+              );
           };
         };
       in
@@ -465,7 +521,7 @@ in
   systemd.services.html-generator = {
     description = "Generate html pages with secrets";
     wantedBy = [ "multi-user.target" ];
-    after = [ "sops-nix.service" ];
+    after = [ "run-keys.mount" ];
     serviceConfig = {
       Type = "oneshot";
       # This creates /run/impressum owned by root:root with mode 0755

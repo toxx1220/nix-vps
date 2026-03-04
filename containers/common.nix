@@ -5,6 +5,12 @@
 {
   options.services.host-proxy = {
     enable = lib.mkEnableOption "host reverse proxy";
+    enableAuth = lib.mkEnableOption "OAuth2 Proxy Authentication";
+    skipAuthRoutes = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "List of path patterns to bypass authentication for.";
+    };
     domain = lib.mkOption { type = lib.types.str; };
     port = lib.mkOption {
       type = lib.types.port;
