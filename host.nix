@@ -38,7 +38,9 @@ let
   gatewayIp = "10.0.0.1";
 
   # --- OAUTH2 PROXY ---
-  oauth2ProxyAddress = "127.0.0.1:4180";
+  oauth2ProxyIp = "127.0.0.1";
+  oauth2ProxyPort = "4180";
+  oauth2ProxyAddress = "${oauth2ProxyIp}:${oauth2ProxyPort}";
 
   # --- CONTAINER REGISTRY ---
   containerRegistry = {
@@ -373,6 +375,7 @@ in
     provider = "github";
     httpAddress = "http://${oauth2ProxyAddress}";
     reverseProxy = true;
+    trustedProxyIP = [ oauth2ProxyIp ];
     extraConfig = {
       whitelist-domain = ".toxx.dev";
       cookie-domain = ".toxx.dev";
