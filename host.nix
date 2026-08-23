@@ -3,6 +3,7 @@
   pkgs,
   lib,
   inputs,
+  comin,
   ...
 }:
 let
@@ -10,48 +11,6 @@ let
   sshPort = 22;
   hostName = "oracle-vps";
   flakeName = "vps-arm";
-
-  # Local persistent clone of this repo — used by the deploy script
-  localRepoPath = "/persistent/nix-vps";
-
-  # Deploy script: pull latest main and rebuild
-  # This is the ONLY thing the CI deploy key can execute (via SSH forced command)
-  deploy-script = pkgs.writeShellApplication {
-    name = "vps-deploy";
-    runtimeInputs = with pkgs; [
-      git
-      nix
-      nixos-rebuild
-      coreutils
-      cacert
-    ];
-    text = ''
-      set -euo pipefail
-
-      LOG="/var/log/nix-deploy.log"
-      log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
-
-      log "=== Starting NixOS Deployment ==="
-
-      if [ ! -d "${localRepoPath}" ]; then
-        log "Initializing repository at ${localRepoPath}..."
-        git clone https://github.com/toxx1220/nix-vps.git "${localRepoPath}"
-      fi
-
-      cd ${localRepoPath}
-
-      log "Fetching latest main..."
-      git fetch origin main
-
-      log "Resetting to origin/main..."
-      git reset --hard origin/main
-
-      log "Starting NixOS rebuild..."
-      nixos-rebuild switch --flake ".#${flakeName}" --accept-flake-config -L 2>&1 | tee -a "$LOG"
-
-      log "=== Deployment Complete ==="
-    '';
-  };
 
   # --- DOMAIN CONFIGURATION ---
   domains = {
@@ -194,21 +153,10 @@ in
 
       auto-optimise-store = true;
 
-      # Garnix CI binary cache
-      extra-substituters = [
-        "https://cache.garnix.io"
-      ];
-      extra-trusted-public-keys = [
-        "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
-      ];
       trusted-users = [
         "root"
         user
       ];
-
-      # Netrc file for private Garnix cache access
-      netrc-file = config.sops.secrets.garnix-netrc.path;
-      narinfo-cache-positive-ttl = 3600;
     };
   };
 
@@ -221,7 +169,6 @@ in
     secrets = {
       user-password.neededForUsers = true;
       root-password.neededForUsers = true;
-      garnix-netrc = { };
       impressum-email = { };
       impressum-phone = { };
       impressum-name = { };
@@ -268,15 +215,20 @@ in
       };
       root = {
         hashedPasswordFile = config.sops.secrets.root-password.path;
-        openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEdkWwiBoThxsipUqiK6hPXLn4KxI5GstfLJaE4nbjMO"
-
-          # CI deploy key — can ONLY execute the deploy script
-          # https://man.openbsd.org/sshd#restrict
-          ''command="${deploy-script}/bin/vps-deploy",restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPJtzHWaOeBmkkKFtvS0i/WKBphdxFF0ZDOBKNNuLjxL ci-deploy''
-        ];
       };
     };
+  };
+
+  services.comin = {
+    enable = true;
+    hostname = flakeName;
+    remotes = [
+      {
+        name = "origin";
+        url = "https://github.com/toxx1220/nix-vps.git";
+        branches.main.name = "main";
+      }
+    ];
   };
 
   services.openssh = {

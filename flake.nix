@@ -1,20 +1,11 @@
 {
   description = "NixOS VPS with Native Containers";
 
-  nixConfig = {
-    extra-substituters = [
-      "https://cache.garnix.io"
-    ];
-    extra-trusted-public-keys = [
-      "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
-    ];
-  };
-
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    garnix-lib = {
-      url = "github:garnix-io/garnix-lib";
+    comin = {
+      url = "github:nlewo/comin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     disko = {
@@ -88,7 +79,7 @@
             ./disko.nix
             ./host.nix
             inputs.sops-nix.nixosModules.sops
-            inputs.garnix-lib.nixosModules.garnix
+            inputs.comin.nixosModules.comin
           ];
         };
       };
