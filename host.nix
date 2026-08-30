@@ -17,6 +17,7 @@ let
     bgsBackend = "bgsearch.toxx.dev";
     testContainer = "oracle.toxx.dev";
     vaultwarden = "vault.toxx.dev";
+    ntfySh = "ntfy.toxx.dev";
   };
 
   # --- CONTAINER NAMES ---
@@ -25,13 +26,15 @@ let
     bgsBackend = "bgs-backend";
     testContainer = "test-container";
     vaultwarden = "vaultwarden";
+    ntfySh = "ntfy-sh";
   };
 
   # --- SERVICE TOGGLES ---
   enableNannuoBot = true;
   enableBgsBackend = true;
-  enableTestContainer = true;
+  enableTestContainer = false;
   enableVaultwarden = true;
+  enableNtfysh = true;
 
   # --- NETWORK CONFIGURATION ---
   networkBridgeName = "br0";
@@ -63,6 +66,11 @@ let
       ip = "10.0.0.13";
       proxyDomain = domains.vaultwarden;
       proxyPort = 8222;
+    };
+    ${containerNames.ntfySh} = {
+      ip = "10.0.0.14";
+      proxyDomain = domains.ntfySh;
+      proxyPort = 8080;
     };
   };
 
@@ -365,6 +373,15 @@ in
         module = ./containers/vaultwarden.nix;
         proxyDomain = containerRegistry.${containerNames.vaultwarden}.proxyDomain;
         proxyPort = containerRegistry.${containerNames.vaultwarden}.proxyPort;
+      };
+    })
+    // (lib.optionalAttrs enableNtfysh {
+      ${containerNames.ntfySh} = mkContainer {
+        name = containerNames.ntfySh;
+        address = containerRegistry.${containerNames.ntfySh}.ip;
+        module = ./containers/ntfy-sh.nix;
+        proxyDomain = containerRegistry.${containerNames.ntfySh}.proxyDomain;
+        proxyPort = containerRegistry.${containerNames.ntfySh}.proxyPort;
       };
     });
 
