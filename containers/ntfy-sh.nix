@@ -1,5 +1,4 @@
 {
-  pkgs,
   config,
   containerName,
   containerDomain,
@@ -25,8 +24,10 @@ in
     sops = {
       defaultSopsFile = ../secrets.yaml;
       useSystemdActivation = true;
-      secrets.ntfy-password-hash = { };
-      secrets.ntfy-app-token = { };
+      secrets.ntfy-admin-password-hash = { };
+      secrets.ntfy-user1-password-hash = { };
+      secrets.ntfy-user2-password-hash = { };
+      secrets.ntfy-user1-token = { };
       templates.${envFile} = {
         mode = "0444";
         content = ''
@@ -45,8 +46,8 @@ in
         behind-proxy = true;
         auth-default-access = "deny-all";
         auth-access = [
-          "user1:*:rw"
-          "user1:*:rw"
+          "${user1}:*:rw"
+          "${user2}:*:rw"
         ];
         enable-signup = false;
         enable-login = true;
