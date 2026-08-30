@@ -7,7 +7,9 @@
   ...
 }:
 let
-  user = "toxx";
+  admin = "toxx-admin";
+  user1 = "toxx";
+  user2 = "user";
   envFile = "${containerName}.env";
 in
 {
@@ -28,8 +30,8 @@ in
       templates.${envFile} = {
         mode = "0444";
         content = ''
-          NTFY_AUTH_USERS=${user}:${config.sops.placeholder.ntfy-password-hash}:admin
-          NTFY_AUTH_TOKENS=${user}:${config.sops.placeholder.ntfy-app-token}:app
+          NTFY_AUTH_USERS=${admin}:${config.sops.placeholder.ntfy-admin-password-hash}:admin,${user1}:${config.sops.placeholder.ntfy-user1-password-hash}:user,${user2}:${config.sops.placeholder.ntfy-user2-password-hash}:user
+          NTFY_AUTH_TOKENS=${user1}:${config.sops.placeholder.ntfy-user1-token}:user1
         '';
       };
     };
@@ -42,6 +44,10 @@ in
         listen-http = "0.0.0.0:${toString containerPort}";
         behind-proxy = true;
         auth-default-access = "deny-all";
+        auth-access = [
+          "user1:*:rw"
+          "user1:*:rw"
+        ];
         enable-signup = false;
         enable-login = true;
       };
