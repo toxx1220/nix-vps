@@ -41,6 +41,7 @@ in
       enable = true;
       environmentFile = config.sops.templates.${envFile}.path;
       settings = {
+        web-root = "disable";
         base-url = "https://${containerDomain}";
         listen-http = "0.0.0.0:${toString containerPort}";
         behind-proxy = true;
