@@ -532,6 +532,8 @@ in
           );
         in
         ''
+          set -eu
+
           export TEMPLATE_FILE=${./static/impressum.template.html}
           export OUTPUT_FILE=${webRoot}/impressum.html
           ${script} \
@@ -546,7 +548,9 @@ in
             PHONE_FILE="$PHONE_FILE" \
             NAME_FILE="$NAME_FILE"
 
-          cp ${./static/index.html} ${./static/style.css} ${webRoot}/
+          rm -f ${webRoot}/index.html ${webRoot}/style.css # required for service restarts
+          cp ${./static/index.html} ${webRoot}/index.html
+          cp ${./static/style.css} ${webRoot}/style.css
         ''
       )}";
     };
