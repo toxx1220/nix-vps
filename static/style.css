@@ -11,6 +11,10 @@
   font-style: normal;
 }
 
+:root {
+  --accent: #ded0de;
+}
+
 body {
   font-family: "Agave Nerd Font", monospace;
   background: #0d0b0e;
@@ -56,5 +60,5 @@ p {
 }
 
 strong {
-  color: #ded0de;
+  color: var(--accent);
 }

@@ -9,18 +9,64 @@
       main {
         display: grid;
         place-items: center;
+        align-content: center;
+        row-gap: 4rem;
       }
+
+      .header-div {
+        text-align: center;
+      }
+
+      .cursor::after {
+        content: "▊";
+        animation: blink 1.1s steps(1) infinite;
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+
       p {
-        font-size: 2rem;
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+      }
+
+      h1 {
+        margin: 0;
+      }
+
+      ul {
+        list-style: none;
+        padding-left: 0;
+      }
+
+      li::before {
+        content: "❯ ";
+        color: var(--accent);
       }
     </style>
   </head>
+
   <body>
     <main>
+      <div class="header-div">
+        <p>not sure how you ended up here, but</p>
         <h1>welcome :)</h1>
+      </div>
+      <div>
+        <p>about me:</p>
+        <ul>
+          <li>Based in Munich</li>
+          <li>Currently pursuing a Computer Science M.Sc</li>
+          <li>I enjoy Coffee :)</li>
+          <li class="cursor" aria-hidden="true"></li>
+        </ul>
+      </div>
     </main>
     <footer>
-      <a href=https://github.com/toxx1220> my github</a>
+      <a href="https://github.com/toxx1220"> my github</a>
       <a href="/impressum">impressum</a>
       <a href="/datenschutz">datenschutz</a>
     </footer>
