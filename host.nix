@@ -489,7 +489,7 @@ in
         "toxx.dev" = {
           extraConfig = ''
             # Serving fonts via caddy
-            handle /fonts/* {
+            handle_path /fonts/* {
               root * ${pkgs.nerd-fonts.agave}/share/fonts/truetype/NerdFonts/Agave
               file_server
             }
