@@ -42,8 +42,6 @@ in
       secrets.borgbase-enc-key = { };
     };
 
-    environment.systemPackages = [ pkgs.sqlite ];
-
     services.vaultwarden = {
       enable = true;
       dbBackend = "sqlite";
@@ -57,9 +55,12 @@ in
       };
     };
 
-    systemd.services.vaultwarden = {
-      after = [ "sops-install-secrets.service" ];
-      requires = [ "sops-install-secrets.service" ];
+    systemd.services = {
+      vaultwarden = {
+        after = [ "sops-install-secrets.service" ];
+        requires = [ "sops-install-secrets.service" ];
+      };
+      borgbackup-job-borgbase.path = [ pkgs.sqlite ];
     };
 
     programs.ssh.knownHosts."ok3apsyr.repo.borgbase.com".publicKey =
