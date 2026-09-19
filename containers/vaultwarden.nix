@@ -83,8 +83,10 @@ in
       '';
       postHook = "rm -f ${backup-file}";
       readWritePaths = [ vaultwarden-path ];
-      encryption.mode = "repokey-blake2";
-      passCommand = "cat ${config.sops.secrets.borgbase-enc-key.path}";
+      encryption = {
+        mode = "repokey-blake2";
+        passCommand = "cat ${config.sops.secrets.borgbase-enc-key.path}";
+      };
       environment.BORG_RSH = "ssh -i ${config.sops.secrets.borgbase-ssh-key.path}";
       compression = "auto,zstd";
       prune.keep = {
