@@ -29,7 +29,7 @@ in
       secrets.ntfy-user2-password-hash = { };
       secrets.ntfy-user1-token = { };
       templates.${envFile} = {
-        mode = "0444";
+        mode = "0400";
         content = ''
           NTFY_AUTH_USERS=${admin}:${config.sops.placeholder.ntfy-admin-password-hash}:admin,${user1}:${config.sops.placeholder.ntfy-user1-password-hash}:user,${user2}:${config.sops.placeholder.ntfy-user2-password-hash}:user
           NTFY_AUTH_TOKENS=${user1}:${config.sops.placeholder.ntfy-user1-token}:user1

@@ -32,8 +32,7 @@ in
       useSystemdActivation = true;
       secrets.vault-admin-token = { };
       templates."vaultwarden.env" = {
-        owner = "vaultwarden";
-        group = "vaultwarden";
+        mode = "0400";
         content = ''
           ADMIN_TOKEN=${config.sops.placeholder."vault-admin-token"}
         '';
