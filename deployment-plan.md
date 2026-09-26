@@ -33,15 +33,9 @@ nix run github:nix-community/nixos-anywhere -- \
 
 ---
 
-## Phase B: Post-Install Setup
+## Phase B: Ongoing Operations
 
-After the initial install, set up the persistent repo clone and CI deploy key.
-
----
-
-## Phase C: Ongoing Operations
-
-Once set up, the system updates automatically via an update action and comin.
+Once set up, the system updates automatically via a flake update action and comin.
 
 ### Weekly dependency updates (Sunday 03:00 UTC)
 
@@ -64,7 +58,6 @@ Uses [DeterminateSystems/update-flake-lock](https://github.com/DeterminateSystem
 
 - Changing mount points: Nix will try to adjust
 - Changing partition sizes/types: **impossible on a live system** — requires a fresh install
-- **Rule of thumb:** Get `disko.nix` right once, then leave it alone
 
 ---
 

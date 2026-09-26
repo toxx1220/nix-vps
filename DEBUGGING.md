@@ -4,7 +4,7 @@
 
 - `sudo nixos-container list` - List all defined containers
 - `sudo nixos-container status <name>` - Show status of a container
-- `sudo nixos-container root-login <name>` - Open a shell inside the container
+- `sudo nixos-container root-login <name>` - Open a shell inside the container as root
 - `sudo nixos-container run <name> -- <command>` - Run a command inside
 - `sudo nixos-container stop <name>` - Stop a container
 - `sudo nixos-container start <name>` - Start a container
@@ -18,6 +18,7 @@
 
 ## Log Inspection (`journalctl`)
 
+- `journalctl -u <service-name> -f` - Follow service logs
 - `journalctl -u container@<name> -f` - Follow host-side container logs
 - `journalctl -M <name> -u <service> -f` - Follow service logs **inside** the container
 - `journalctl -M <name> -n 100` - See last 100 logs from inside the container
