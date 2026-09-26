@@ -24,7 +24,6 @@ let
   # --- DOMAIN CONFIGURATION ---
   domains = {
     bgsBackend = "bgsearch.toxx.dev";
-    testContainer = "oracle.toxx.dev";
     vaultwarden = "vault.toxx.dev";
     ntfySh = "ntfy.toxx.dev";
   };
@@ -33,7 +32,6 @@ let
   containerNames = {
     nannuoBot = "nannuo-bot";
     bgsBackend = "bgs-backend";
-    testContainer = "test-container";
     vaultwarden = "vaultwarden";
     ntfySh = "ntfy-sh";
   };
@@ -41,7 +39,6 @@ let
   # --- SERVICE TOGGLES ---
   enableNannuoBot = true;
   enableBgsBackend = true;
-  enableTestContainer = false;
   enableVaultwarden = true;
   enableNtfysh = true;
 
@@ -64,11 +61,6 @@ let
     ${containerNames.bgsBackend} = {
       ip = "10.0.0.12";
       proxyDomain = domains.bgsBackend;
-      proxyPort = 8080;
-    };
-    ${containerNames.testContainer} = {
-      ip = "10.0.0.10";
-      proxyDomain = domains.testContainer;
       proxyPort = 8080;
     };
     ${containerNames.vaultwarden} = {
@@ -116,6 +108,8 @@ let
             interface = "eth0";
           };
 
+          sops.age.keyFile = "/var/lib/sops-nix/key.txt";
+
           _module.args = {
             inherit inputs;
             containerName = name;
@@ -127,7 +121,7 @@ let
 
       bindMounts = {
         "sops-key" = {
-          hostPath = "/persistent/etc/ssh/ssh_host_ed25519_key";
+          hostPath = config.sops.secrets."container-age-key-${name}".path;
           mountPoint = "/var/lib/sops-nix/key.txt";
           isReadOnly = true;
         };
@@ -193,6 +187,10 @@ in
       impressum-name = htmlGeneratorSecret;
       proton_privkey = { };
       oauth2-proxy-env = { };
+      container-age-key-bgs-backend = { };
+      container-age-key-nannuo-bot = { };
+      container-age-key-ntfy-sh = { };
+      container-age-key-vaultwarden = { };
     };
   };
 
@@ -357,7 +355,7 @@ in
       ${containerNames.nannuoBot} = mkContainer {
         name = containerNames.nannuoBot;
         address = containerRegistry.${containerNames.nannuoBot}.ip;
-        module = ./containers/nannuo-bot.nix;
+        module = ./containers/nannuo-bot/nannuo-bot.nix;
         extraImports = [ inputs.nannuo-bot.nixosModules.default ];
       };
     })
@@ -365,26 +363,17 @@ in
       ${containerNames.bgsBackend} = mkContainer {
         name = containerNames.bgsBackend;
         address = containerRegistry.${containerNames.bgsBackend}.ip;
-        module = ./containers/bgs-backend.nix;
+        module = ./containers/bgs-backend/bgs-backend.nix;
         proxyDomain = containerRegistry.${containerNames.bgsBackend}.proxyDomain;
         proxyPort = containerRegistry.${containerNames.bgsBackend}.proxyPort;
         extraImports = [ inputs.bgs-backend.nixosModules.default ];
-      };
-    })
-    // (lib.optionalAttrs enableTestContainer {
-      ${containerNames.testContainer} = mkContainer {
-        name = containerNames.testContainer;
-        address = containerRegistry.${containerNames.testContainer}.ip;
-        module = ./containers/test-container.nix;
-        proxyDomain = containerRegistry.${containerNames.testContainer}.proxyDomain;
-        proxyPort = containerRegistry.${containerNames.testContainer}.proxyPort;
       };
     })
     // (lib.optionalAttrs enableVaultwarden {
       ${containerNames.vaultwarden} = mkContainer {
         name = containerNames.vaultwarden;
         address = containerRegistry.${containerNames.vaultwarden}.ip;
-        module = ./containers/vaultwarden.nix;
+        module = ./containers/vaultwarden/vaultwarden.nix;
         proxyDomain = containerRegistry.${containerNames.vaultwarden}.proxyDomain;
         proxyPort = containerRegistry.${containerNames.vaultwarden}.proxyPort;
       };
@@ -393,7 +382,7 @@ in
       ${containerNames.ntfySh} = mkContainer {
         name = containerNames.ntfySh;
         address = containerRegistry.${containerNames.ntfySh}.ip;
-        module = ./containers/ntfy-sh.nix;
+        module = ./containers/ntfy-sh/ntfy-sh.nix;
         proxyDomain = containerRegistry.${containerNames.ntfySh}.proxyDomain;
         proxyPort = containerRegistry.${containerNames.ntfySh}.proxyPort;
       };
@@ -414,11 +403,6 @@ in
       email-domain = "*";
       footer = "<a href=\\\"https://toxx.dev/impressum\\\" style=\\\"color:inherit;\\\">Impressum</a> | <a href=\\\"https://toxx.dev/datenschutz\\\" style=\\\"color:inherit;\\\">Datenschutz</a>";
     };
-  };
-
-  systemd.services.oauth2-proxy = {
-    after = [ "run-keys.mount" ];
-    requires = [ "run-keys.mount" ];
   };
 
   # Dynamic Caddy Configuration for Containers

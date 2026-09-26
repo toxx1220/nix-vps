@@ -22,7 +22,7 @@ in
     };
 
     sops = {
-      defaultSopsFile = ../secrets.yaml;
+      defaultSopsFile = ./secrets.yaml;
       useSystemdActivation = true;
       secrets.ntfy-admin-password-hash = { };
       secrets.ntfy-user1-password-hash = { };

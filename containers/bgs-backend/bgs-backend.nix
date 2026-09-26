@@ -18,7 +18,7 @@
     };
 
     sops = {
-      defaultSopsFile = ../secrets.yaml;
+      defaultSopsFile = ./secrets.yaml;
       useSystemdActivation = true;
       secrets.bgs_env = { };
     };

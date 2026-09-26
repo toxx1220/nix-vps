@@ -1,0 +1,12 @@
+keys:
+  - &ntfy_sh age1grgsv573ldhpat829qje0dxlfw0yydsq56rqwpefkhqdr4hau9uqt48qts
+  - &dev age1sur65t9wa9s0krds32kx9h379masmkyf663wwwav2ye0v5syyv2qkaxsd8
+  - &desktop age1j7rx2tpjsltwtpvdfyaaq3pflzx37cd9neycgsujt2hpuuvsva4sjupjjp
+
+creation_rules:
+  - path_regex: secrets.yaml$
+    key_groups:
+      - age:
+          - *ntfy_sh
+          - *dev
+          - *desktop

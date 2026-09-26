@@ -28,7 +28,7 @@ in
     };
 
     sops = {
-      defaultSopsFile = ../secrets.yaml;
+      defaultSopsFile = ./secrets.yaml;
       useSystemdActivation = true;
       secrets.vault-admin-token = { };
       templates."vaultwarden.env" = {

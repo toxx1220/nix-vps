@@ -1,0 +1,12 @@
+keys:
+  - &nannuo_bot age18v27ys63fzxx9urgpzerpac4gulsvpu6ppn4pycac5hm0x7zn9nq92ngdz
+  - &dev age1sur65t9wa9s0krds32kx9h379masmkyf663wwwav2ye0v5syyv2qkaxsd8
+  - &desktop age1j7rx2tpjsltwtpvdfyaaq3pflzx37cd9neycgsujt2hpuuvsva4sjupjjp
+
+creation_rules:
+  - path_regex: secrets.yaml$
+    key_groups:
+      - age:
+          - *nannuo_bot
+          - *dev
+          - *desktop

@@ -23,9 +23,5 @@
 
     networking.nameservers = [ "1.1.1.1" ];
     networking.firewall.enable = false;
-
-    # Shared SOPS key setup for containers
-    # We bind mount the key from the host to this specific path
-    sops.age.sshKeyPaths = [ "/var/lib/sops-nix/key.txt" ];
   };
 }

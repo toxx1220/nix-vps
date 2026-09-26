@@ -1,0 +1,12 @@
+keys:
+  - &bgs_backend age1m3dkyz5hqucu534v7y4tah92ea29gash5zdlqumk8w7xcstena4q57lztz
+  - &dev age1sur65t9wa9s0krds32kx9h379masmkyf663wwwav2ye0v5syyv2qkaxsd8
+  - &desktop age1j7rx2tpjsltwtpvdfyaaq3pflzx37cd9neycgsujt2hpuuvsva4sjupjjp
+
+creation_rules:
+  - path_regex: secrets.yaml$
+    key_groups:
+      - age:
+          - *bgs_backend
+          - *dev
+          - *desktop
