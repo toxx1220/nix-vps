@@ -8,8 +8,8 @@
 
   settings.excludes = [
     "settings.json"
-    "secrets.yaml"
-    ".sops.yaml"
+    "*secrets.yaml"
+    "*.sops.yaml"
     "*.md"
     "flake.lock"
     "*.sql"
@@ -17,8 +17,8 @@
 
   programs.prettier.excludes = [
     "settings.json"
-    "secrets.yaml"
-    ".sops.yaml"
+    "*secrets.yaml"
+    "*.sops.yaml"
     "*.md"
     "*.sql"
   ];
