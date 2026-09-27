@@ -22,6 +22,8 @@ in
       port = containerPort;
     };
 
+    environment.systemPackages = [ pkgs.rainfrog ];
+
     sops = {
       defaultSopsFile = ./secrets.yaml;
       useSystemdActivation = true;
