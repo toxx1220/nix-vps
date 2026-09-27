@@ -1,5 +1,7 @@
 {
   lib,
+  containerPort,
+  containerGateway,
   ...
 }:
 {
@@ -21,7 +23,16 @@
   config = {
     system.stateVersion = "25.11";
 
-    networking.nameservers = [ "1.1.1.1" ];
-    networking.firewall.enable = false;
+    networking = {
+      nameservers = [ "1.1.1.1" ];
+
+      nftables.enable = true;
+      firewall = {
+        enable = true;
+        extraInputRules = lib.optionalString (containerPort != 0) ''
+          ip saddr ${containerGateway} tcp dport ${toString containerPort} accept
+        '';
+      };
+    };
   };
 }

@@ -112,6 +112,7 @@ let
 
           _module.args = {
             inherit inputs;
+            containerGateway = gatewayIp;
             containerName = name;
             containerDomain = proxyDomain;
             containerPort = proxyPort;
