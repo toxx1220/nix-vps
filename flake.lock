@@ -8,11 +8,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1791623439,
-        "narHash": "sha256-pMc7zIucxjvDXciFzOQ9NcgpFuG/47QD8Ilid6d8HYU=",
+        "lastModified": 1791813151,
+        "narHash": "sha256-rSw9QWwJ3BVO6OmLksRx+ZW4HwoaxSYlWqogdHx2l5U=",
         "owner": "toxx1220",
         "repo": "bgs_backend_V2",
-        "rev": "d30843f30ac3087114fc568f498f4496416b6e48",
+        "rev": "c5a8233937fe4ee9e0eb5db3e4b6fc87a20a1dfb",
         "type": "github"
       },
       "original": {
