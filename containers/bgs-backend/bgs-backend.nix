@@ -4,6 +4,7 @@
   containerName,
   containerDomain,
   containerPort,
+  schedule,
   ...
 }:
 let
@@ -29,7 +30,10 @@ in
       useSystemdActivation = true;
       secrets.git-token = { };
       secrets.bgg-api-key = { };
-      secrets.postgres-password = { owner = "postgres"; mode = "0400"; };
+      secrets.postgres-password = {
+        owner = "postgres";
+        mode = "0400";
+      };
       templates.${bgs-env} = {
         mode = "0400";
         content = ''
@@ -38,8 +42,8 @@ in
         '';
       };
       templates.${db-env} = {
-          mode = "0400";
-          content = "SPRING_DATASOURCE_PASSWORD=${config.sops.placeholder.postgres-password}\n";
+        mode = "0400";
+        content = "SPRING_DATASOURCE_PASSWORD=${config.sops.placeholder.postgres-password}\n";
       };
     };
 
@@ -81,6 +85,7 @@ in
       enable = true;
       databases = [ db-name ];
       location = "/var/lib/postgresql/backups";
+      startAt = schedule.pgBackup;
     };
 
     systemd.services.bgs-backend = {

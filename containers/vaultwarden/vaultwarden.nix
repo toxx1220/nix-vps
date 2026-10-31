@@ -4,6 +4,7 @@
   containerName,
   containerDomain,
   containerPort,
+  schedule,
   ...
 }:
 let
@@ -94,7 +95,7 @@ in
         weekly = 4;
         monthly = 6;
       };
-      startAt = "daily";
+      startAt = schedule.borgBackup;
       persistentTimer = true;
       doInit = true;
     };

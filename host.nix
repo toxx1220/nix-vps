@@ -42,6 +42,14 @@ let
   enableVaultwarden = true;
   enableNtfysh = true;
 
+  # --- SCHEDULES ---
+  schedule = {
+    reboot = "Sun *-*-* 04:30:00"; # Automatic git flake update is at 03:00
+    nixGc = "weekly";
+    borgBackup = "daily"; # vaultwarden
+    pgBackup = "*-*-* 01:15:00"; # bgs-backend
+  };
+
   # --- NETWORK CONFIGURATION ---
   networkBridgeName = "br0";
   gatewayIp = "10.0.0.1";
@@ -111,7 +119,7 @@ let
           sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
           _module.args = {
-            inherit inputs;
+            inherit inputs schedule;
             containerGateway = gatewayIp;
             containerName = name;
             containerDomain = proxyDomain;
@@ -135,6 +143,8 @@ in
   time.timeZone = "Europe/Berlin";
 
   boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot.bootCounting.enable = true; # auto-rollback a generation that fails to boot
+  boot.loader.systemd-boot.configurationLimit = 3; # per profile; ESP fits ~5 kernels
   boot.loader.efi.canTouchEfiVariables = true;
   boot.initrd.availableKernelModules = [
     "virtio_pci"
@@ -155,6 +165,7 @@ in
   programs.nh = {
     enable = true;
     clean.enable = true;
+    clean.dates = schedule.nixGc;
     clean.extraArgs = "--keep 3 --keep-since 3d";
   };
 
@@ -205,6 +216,8 @@ in
       "/var/log" # System logs
       "/var/lib/nixos" # UID/GID maps (prevents permission issues)
       "/var/lib/systemd/coredump"
+      "/var/lib/systemd/timers" # Persisted timers fire on reboot if no file is found
+      "/var/lib/comin" # comin deployment history + gc roots
       "/var/lib/containers" # Podman/Docker containers
       "/var/lib/nixos-containers" # Persist all native NixOS container root filesystems
       "/var/lib/caddy" # SSL certificates
@@ -540,6 +553,17 @@ in
       )}";
     };
   };
+
+  # --- SCHEDULED JOBS ---
+  systemd.services.weekly-reboot = {
+    description = "Weekly reboot: e.g. Applies kernel update & clears tmpfs files (impermanence)";
+    script = "exec ${config.systemd.package}/bin/systemctl reboot";
+    startAt = schedule.reboot;
+    serviceConfig.Type = "oneshot";
+  };
+
+  # Not Persistent on purpose: catching up would reboot right after boot.
+  systemd.timers.weekly-reboot.timerConfig.RandomizedDelaySec = "5m";
 
   system.stateVersion = "25.11";
 }
