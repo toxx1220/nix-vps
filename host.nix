@@ -44,7 +44,7 @@ let
 
   # --- SCHEDULES ---
   schedule = {
-    reboot = "Sun *-*-* 04:30:00"; # Automatic git flake update is at 03:00
+    reboot = "Sun *-*-* 03:00:00"; # Automatic git flake update is Saturday at 03:00
     nixGc = "weekly";
     borgBackup = "daily"; # vaultwarden
     pgBackup = "*-*-* 01:15:00"; # bgs-backend
